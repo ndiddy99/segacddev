@@ -6,7 +6,7 @@ SET INCLUDE_PATH=%ROOT_DIR%\source
 SET ASM_FLAGS=/p /j %INCLUDE_PATH%
 
 ECHO Building main program
-%ASM_DIR%\asm68k.exe %ASM_FLAGS% program\program.s, program\program.bin
+%ASM_DIR%\asm68k.exe %ASM_FLAGS% program\program.s, program\program.bin, program\program.sym, program\program.lst
 %ASM_DIR%\asm68k.exe %ASM_FLAGS% program\loader.s, filesystem\IPL.BIN
 
 ECHO Building Filesystem

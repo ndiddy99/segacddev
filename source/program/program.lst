@@ -1,0 +1,876 @@
+00000000                            ;****************************************************************
+00000000                            ;	Sega CD Freeloader: Main Genesis program
+00000000                            ;
+00000000                            ;	Copyright Nathan Misner
+00000000                            ;
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;						Created 11/1/20
+00000000                            ;****************************************************************
+00000000                            
+00000000                            ;include
+00000000                            	include include\md.i		;hw mapping
+00000000                            ;****************************************************************
+00000000                            ;	MARS MEGA-CD Boot Check Program
+00000000                            ;					Mega Drive Mapping Assign
+00000000                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+00000000                            ;				SEGA ENTERPRISES,LTD.
+00000000                            ;				CS Hardware R&D Dept.
+00000000                            ;						T.Okawa
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;
+00000000                            ;****************************************************************
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00000000                  os_rom		equ	$000000			; os rom address
+00000000 =00010000                  bios_address	equ	$010000			; bios system address
+00000000 =00020000                  s_prog_ram	equ	$020000	; ->$03ffff	; subcpu program ram
+00000000 =00200000                  word_ram	equ	$200000			; 2Mbit word ram
+00000000 =00220000                  v_image_256	equ	$220000			; vram image 32cell
+00000000 =00230000                  v_image_128	equ	$230000			; vram image 16cell
+00000000 =00238000                  v_image_64	equ	$238000			; vram image 8cell
+00000000 =0023C000                  v_image_32_0	equ	$23c000			; vram image 4cell 0
+00000000 =0023E000                  v_image_32_1	equ	$23e000			; vram image 4cell 1
+00000000                            
+00000000 =00840000                  framebuffer	equ	$840000
+00000000 =00860000                  overwrite	equ	$860000
+00000000 =00880000                  marsipl		equ	$880000
+00000000 =00900000                  marsbank	equ	$900000
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00A00000                  zprg_ram	equ	$a00000
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00A10001                  _version	equ	$a10001		; byte		; md version
+00000000 =00A10003                  _port_a		equ	$a10003		; byte		; joy pad a
+00000000 =00A10005                  _port_b		equ	$a10005		; byte		; joy pad b
+00000000 =00A10007                  _port_c		equ	$a10007		; byte		; joy pad c
+00000000 =00A10009                  _pa_cont	equ	$a10009		; byte		; joy pad a control
+00000000 =00A1000B                  _pb_cont	equ	$a1000b		; byte		; joy pad b control
+00000000 =00A1000D                  _pc_cont	equ	$a1000d		; byte		; joy pad c control
+00000000 =00A11000                  _cartmode	equ	$a11000		; word
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00A11100                  z_brq		equ	$a11100				; Z80 bus request
+00000000 =00A11200                  z_res		equ	$a11200				; Z80 reset
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00A12000                  _iflreg		equ	$a12000		; byte		; Interrupt
+00000000 =00A12001                  _resreg		equ	$a12001		; byte		; Reset
+00000000 =00A12002                  _protect	equ	$a12002		; byte		; Write Protect
+00000000 =00A12003                  _memory		equ	$a12003		; byte		; Memory Mode
+00000000 =00A12004                  _cdcmode	equ	$a12004		; byte		; cdc mode register
+00000000 =00A12006                  _h_vector	equ	$a12006		; word		; H Interrupt Vector
+00000000 =00A12008                  _cdchost	equ	$a12008		; word		; cdc data port
+00000000                            
+00000000 =00A1200E                  main_flug	equ	$a1200e		; byte		; maincpu flug
+00000000 =00A1200F                  sub_flug	equ	$a1200f		; byte		; subcpu fug
+00000000 =00A12010                  command_0	equ	$a12010				; communication command
+00000000 =00A12012                  command_2	equ	$a12012				;
+00000000 =00A12014                  command_4	equ	$a12014				;
+00000000 =00A12016                  command_6	equ	$a12016				;
+00000000 =00A12018                  command_8	equ	$a12018				;
+00000000 =00A1201A                  command_10	equ	$a1201a				;
+00000000 =00A1201C                  command_12	equ	$a1201c				;
+00000000 =00A1201E                  command_14	equ	$a1201e				;
+00000000 =00A12020                  status_0	equ	$a12020				; communication status
+00000000 =00A12022                  status_2	equ	$a12022				;
+00000000 =00A12024                  status_4	equ	$a12024				;
+00000000 =00A12026                  status_6	equ	$a12026				;
+00000000 =00A12028                  status_8	equ	$a12028				;
+00000000 =00A1202A                  status_10	equ	$a1202a				;
+00000000 =00A1202C                  status_12	equ	$a1202c				;
+00000000 =00A1202E                  status_14	equ	$a1202e				;
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00A130EC                  mars_ID		equ	$a130ec		; long		; MARS ID "MARS"
+00000000 =00A130F1                  bankchip	equ	$a130f1		;		; Bank Chip Reg.0
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00A14000                  _security	equ	$a14000		; long		; md security
+00000000 =00A14100                  _v6os		equ	$a14100		; word
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00A15100                  marsreg		equ	$a15100
+00000000 =00000000                  access		equ	$00		; byte		; MARS VDP access control
+00000000 =00000001                  adapter		equ	$01		; byte		; MARS adapter control
+00000000 =00000003                  intctl		equ	$03		; byte		; SH2 interrupt control
+00000000 =00000005                  bankctl		equ	$05		; byte		; BANK conterol
+00000000 =00000007                  dreqctl		equ	$07		; byte		; DREQ control
+00000000 =00000008                  dreqsource	equ	$08		; long		; 68 to SH DREQ source address
+00000000 =0000000C                  dreqdest	equ	$0c		; long		; 68 to SH DREQ destination address
+00000000 =00000010                  dreqlength	equ	$10		; word		; 68 to SH DREQ length
+00000000 =00000012                  dreqfifo	equ	$12		; word		; 68 to SH DREQ FIFO
+00000000 =0000001B                  segatv		equ	$1b		; byte		; SEGA TV Reg.
+00000000 =00000020                  comm0		equ	$20		; 		; Communcation Reg.
+00000000 =00000022                  comm2		equ	$22		; 		; Communcation Reg.
+00000000 =00000024                  comm4		equ	$24		; 		; Communcation Reg.
+00000000 =00000026                  comm6		equ	$26		; 		; Communcation Reg.
+00000000 =00000028                  comm8		equ	$28		; 		; Communcation Reg.
+00000000 =00000029                  comm9		equ	$29		; 		; Communcation Reg.
+00000000 =0000002A                  comm10		equ	$2a		; 		; Communcation Reg.
+00000000 =0000002C                  comm12		equ	$2c		; 		; Communcation Reg.
+00000000 =0000002E                  comm14		equ	$2e		; 		; Communcation Reg.
+00000000 =00000030                  timctl		equ	$30		; byte		; PWM Timer Control
+00000000 =00000031                  pwmctl		equ	$31		; byte		; PWM Control
+00000000 =00000032                  fstimer		equ	$32		; word		; PWM Frequency Timer
+00000000 =00000034                  lchpulse	equ	$34		; word		; PWM Lch Pulse Width
+00000000 =00000036                  rchpulse	equ	$36		; word		; PWM Rch Pulse Width
+00000000 =00000038                  monopulse	equ	$38		; word		; PWM Monaural Pulse Width
+00000000                            
+00000000 =00000080                  tvmode		equ	$80		; byte		; NTSC/PAL
+00000000 =00000081                  bitmapmd	equ	$81		; byte		; BitMap Mode Reg.
+00000000 =00000083                  shift		equ	$83		; byte		; Packed Pixel Dot Shift
+00000000 =00000085                  filllength	equ	$85		; byte		; DRAM Fill Length
+00000000 =00000086                  fillstart	equ	$86		; word		; DRAM Fill Start Address
+00000000 =00000088                  filldata	equ	$88		; word		; DRAM Fill Data
+00000000 =0000008A                  vdpsts		equ	$8a		; byte		; VDP status
+00000000 =0000008B                  framectl	equ	$8b		; byte		; Frame Buffer Control
+00000000                            
+00000000 =00A15200                  palette		equ	$a15200		; 256 words	; Palette Data
+00000000                            
+00000000                            
+00000000 =00C00000                  _vdpdata	equ	$c00000				; vdp data port
+00000000 =00C00004                  _vdpreg		equ	$c00004				; vdp register
+00000000                            
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Bit Assign
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            ; access
+00000000 =00000007                  FM		equ	7		; 0:MD		/1: SH
+00000000                            
+00000000                            ; adapter
+00000000 =00000000                  ADEN		equ	0		; 0: disenable 	/1: enable
+00000000 =00000001                  RES		equ	1		; 0: SH2 reset 	/1: SH2 reset off
+00000000                            
+00000000                            ; intctl
+00000000 =00000000                  INTM		equ	0		; 0: NOP	/1: master CMD INT
+00000000 =00000001                  INTS		equ	1		; 0: NOP	/1: slave  CMD INT
+00000000                            
+00000000                            ; dreqctl
+00000000 =00000000                  RV		equ	0		; 0: NOP	/1: ROM to VRAM DMA
+00000000 =00000001                  DMA		equ	1		; 0: CPU write	/1: DMA write
+00000000 =00000002                  D68S		equ	2		; 0: NOP	/1: DREQ start
+00000000 =00000007                  FULL		equ	7		; 0: empty	/1: full
+00000000                            
+00000000                            ; segatv
+00000000 =00000000                  CM		equ	0		; 0: ROM	/1: DRAM
+00000000                            
+00000000                            ; tvmode
+00000000 =00000007                  PAL		equ	7		; 0:NTSC	/1: PAL
+00000000                            
+00000000                            ; bitmapmode
+00000000 =00000006                  L240		equ	6		; 0:224line	/1: 240line
+00000000 =00000007                  PRI		equ	7		; 0:ÇlÇcóDêÊ	/1: ÇlÇ`ÇqÇróDêÊ
+00000000                            
+00000000                            ; shift
+00000000 =00000000                  SFT		equ	0		; 0:Nomal	/1: Dot Shift
+00000000                            
+00000000                            ; vdpsts
+00000000 =00000005                  PEN		equ	5		; 0:Palette EN	/1: Palette DisEN
+00000000 =00000006                  HBLK		equ	6		; 0:Disp	/1: Blank
+00000000 =00000007                  VBLK		equ	7		; 0:Disp	/1: Blank
+00000000                            
+00000000                            ; framectl
+00000000 =00000000                  FS		equ	0		; 0:DRAM0	/1: DRAM1
+00000000 =00000001                  FEN		equ	1		; 0:access EN	/1: access DisEN
+00000000                            
+00000000                            ; _iflreg
+00000000 =00000000                  IFL2		equ	0		; 0:No opration /1: SUBCPU INT
+00000000 =00000007                  IEN2		equ	7		; 0:INT Mask	/1: INT Enable
+00000000                            
+00000000                            ; _memory
+00000000 =00000002                  MODE		equ	2		; 0:2M mode	/1: 1M mode
+00000000 =00000001                  DMNA		equ	1		; 0:Swap OK	/1: Swap request
+00000000 =00000000                  RET		equ	0		; 0:Running	/1: Return Main
+00000000                            
+00000000                            ; _cdcmode
+00000000 =00000002                  MAINREAD	equ	2		; Main CPU read
+00000000 =00000003                  SUBREAD		equ	3		; Sub CPU read
+00000000 =00000004                  PCMDMA		equ	4		; PCM DMA
+00000000 =00000005                  PRGDMA		equ	5		; Program RAM DMA
+00000000 =00000007                  WORDDMA		equ	7		; Word RAM DMA
+00000000                            
+00000000 =00000007                  EDT		equ	7		; End of Data Transfer
+00000000 =00000006                  DSR		equ	6		; Data Set Ready
+00000000                            
+00000000                            ; sub_flug
+00000000 =00000007                  S_READY		equ	7
+00000000                            
+00000000                            ; main_flug
+00000000 =00000007                  M_READY		equ	7
+00000000                            
+00000000                            
+00000000                            ;****************************************************************
+00000000                            ;	end of file
+00000000                            ;****************************************************************
+00000000                            ;****************************************************************
+00000000                            	include include\m_const.i	;hw constants
+00000000                            ;****************************************************************
+00000000                            ;	MARS MEGA-CD Boot Check Program
+00000000                            ;					Mega Drive Constants and Macro
+00000000                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+00000000                            ;				SEGA ENTERPRISES,LTD.
+00000000                            ;				CS Hardware R&D Dept.
+00000000                            ;						T.Okawa
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;
+00000000                            ;****************************************************************
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Cosntants
+00000000                            ;---------------------------------------------------------------;
+00000000 =00004E73                  RTE_CODE	equ	$4e73	; Return code
+00000000 =00004EF9                  JMP_CODE	equ	$4ef9	; Jump code
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	VRAM assign
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000 =00000020                  SYSTEM_AREA	equ	$0020	; ÉÅÉCÉìâÊñ 
+00000000 =00000400                  ASCII_AREA	equ	$0400	; Ç`ÇrÇbÇhÇhÅiÇWÇwÇWÅj (Length $0c00)
+00000000 =00002000                  SCR_A_TBL	equ	$2000	; Scroll A table base address
+00000000 =00002000                  WINDOW_BASE	equ	$2000	; Window base address
+00000000 =00004000                  SCR_B_TBL	equ	$4000	; Scroll B table base address
+00000000 =00004000                  SPR_BASE	equ	$4000	; Sprite table base address
+00000000 =00000000                  BGCOLOR		equ	$0000	; Back ground color
+00000000 =00006000                  HSCR_TBL	equ	$6000	; H scroll table base address
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	align	xx
+00000000                            ;		xx = what to align to
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            align		macro xx
+00000000                            		cnop 0,xx
+00000000                            		endm
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Wait	xx
+00000000                            ;		xx = wait time (unit 1/60sec)
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            wait:		macro xx
+00000000                            		clr.w	w_counter(a6)
+00000000                            	@l0:
+00000000                            		cmp.w	#xx,w_counter(a6)
+00000000                            		bcs.b	@10
+00000000                            		endm
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	complete
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            complete	macro
+00000000                            		move	#0,ccr
+00000000                            		endm
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	error
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            error		macro
+00000000                            		move	#1,ccr
+00000000                            		endm
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	call	xx,yy
+00000000                            ;		xx = nz,z,nc,c
+00000000                            ;		yy = jump address
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            call		macro	xx,yy
+00000000                            		if	strcmp("xx","nz")
+00000000                            			beq.b	@jamp\@
+00000000                            		endif
+00000000                            		if	strcmp("xx","z")
+00000000                            			bne.b	@jamp\@
+00000000                            		endif
+00000000                            		if	strcmp("xx","nc")
+00000000                            			bcs.b	@jamp\@
+00000000                            		endif
+00000000                            		if	strcmp("xx","c")
+00000000                            			bcc.b	@jamp\@
+00000000                            		endif
+00000000                            		bsr	yy
+00000000                            @jamp\@:
+00000000                            		endm
+00000000                            
+00000000                            ;****************************************************************
+00000000                            ;	end of file
+00000000                            ;****************************************************************
+00000000                            ;****************************************************************
+00000000                            	include include\mdwork.i	;wram locations
+00000000                            ;****************************************************************
+00000000                            ;	MARS MEGA-CD Boot Check Program
+00000000                            ;					Mega Drive Work RAM Assign
+00000000                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+00000000                            ;				SEGA ENTERPRISES,LTD.
+00000000                            ;				CS Hardware R&D Dept.
+00000000                            ;						T.Okawa
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;
+00000000                            ;****************************************************************
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =00FF0000                  workbase	equ	$00ff0000	; $2000	; work start (program area)
+00000000                            
+00000000 =00FF4000                  tempbuff	equ	$00ff4000	; $1000	; temporaly buffer
+00000000                            
+00000000 =FFFFC180                  colorbuffer	equ	$ffffc180	; $80	; color data buffer
+00000000 =FFFFC200                  scrbuffer	equ	$ffffc200	; $f00	; scroll A buffer
+00000000 =FFFFD100                  scrbufferB	equ	$ffffd100	; $f00	; scroll B buffer
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000 =FFFFE000                  systembase	equ	$ffffe000		; system used work start
+00000000 =00000000                  reg_0		equ	$0000		; 2	; VDP reg. #0
+00000000 =00000002                  reg_1		equ	$0002		; 2	; VDP reg. #1
+00000000 =00000004                  reg_2		equ	$0004		; 2	; VDP reg. #2
+00000000 =00000006                  reg_3		equ	$0006		; 2	; VDP reg. #3
+00000000 =00000008                  reg_4		equ	$0008		; 2	; VDP reg. #4
+00000000 =0000000A                  reg_5		equ	$000a		; 2	; VDP reg. #5
+00000000 =0000000C                  reg_6		equ	$000c		; 2	; VDP reg. #6
+00000000 =0000000E                  reg_7		equ	$000e		; 2	; VDP reg. #7
+00000000 =00000010                  reg_8		equ	$0010		; 2	; VDP reg. #8
+00000000 =00000012                  reg_9		equ	$0012		; 2	; VDP reg. #9
+00000000 =00000014                  reg_10		equ	$0014		; 2	; VDP reg. #10
+00000000 =00000016                  reg_11		equ	$0016		; 2	; VDP reg. #11
+00000000 =00000018                  reg_12		equ	$0018		; 2	; VDP reg. #12
+00000000 =0000001A                  reg_13		equ	$001a		; 2	; VDP reg. #13
+00000000 =0000001C                  reg_14		equ	$001c		; 2	; VDP reg. #14
+00000000 =0000001E                  reg_15		equ	$001e		; 2	; VDP reg. #15
+00000000 =00000020                  reg_16		equ	$0020		; 2	; VDP reg. #16
+00000000 =00000022                  reg_17		equ	$0022		; 2	; VDP reg. #17
+00000000 =00000024                  reg_18		equ	$0024		; 2	; VDP reg. #18
+00000000 =00000026                  joymemo1	equ	$0026		; 1	; joy pad 1
+00000000 =00000027                  joymemo2	equ	$0027		; 1	; joy pad 2
+00000000 =00000028                  joytrrg1	equ	$0028		; 1	; joy pad 1 push
+00000000 =00000029                  joytrrg2	equ	$0029		; 1	; joy pad 2 push
+00000000 =0000002A                  joyoff1		equ	$002a		; 1	; joy pad 1 release
+00000000 =0000002B                  joyoff2		equ	$002b		; 1	; joy pad 2 release
+00000000 =0000002C                  vdp_flug	equ	$002c		; 1	; VDP control flug
+00000000 =0000002D                  vdp_flug1	equ	$002d		; 1	;	"
+00000000 =0000002E                  sys_flug	equ	$002e		; 1	; System used flug
+00000000 =0000002F                  init_flug	equ	$002f		; 1	; initial flug
+00000000 =00000030                  v_counter	equ	$0030		; 2	; V interrupt counter
+00000000 =00000032                  w_counter	equ	$0032		; 2	; wait counter
+00000000 =00000034                  dmaoffset	equ	$0034		; 4	; DMA offset address
+00000000 =00000038                  h_counter	equ	$0038		; 2	; H interrupt counter
+00000000 =00000040                  vblank_flag	equ	$0040		; 2	; flag for when vblank is over
+00000000                            
+00000000 =00000100                  textbuffer	equ	$0100		; $80	; ÉeÉLÉXÉgï\é¶óp
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	MEGA-CD OS used RAM area
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            ;Stack		equ	$fffffd00	;$100 For Stack
+00000000 =FFFFFD00                  os_sys_ram	equ	$fffffd00	;$200 OS SYStem RAM area
+00000000                            ;for modem	equ	$ffffff00	;100 use ark for modem
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            ;;;;;;;;< OS system ram assign	>;;;;;;;
+00000000                            ; Clear only power on
+00000000                            ;Jump Tables
+00000000 =FFFFFD00                  _reset		equ	os_sys_ram		;6: reset jump table
+00000000 =FFFFFD06                  _mlevel6	equ	_reset+6		;V interrupt
+00000000 =FFFFFD0C                  _mlevel4	equ	_mlevel6+6		;H interrupt
+00000000 =FFFFFD12                  _mlevel2	equ	_mlevel4+6		;external interrupt
+00000000 =FFFFFD18                  _mtrap00	equ	_mlevel2+6		;TRAP #00
+00000000 =FFFFFD1E                  _mtrap01	equ	_mtrap00+6		
+00000000 =FFFFFD24                  _mtrap02	equ	_mtrap01+6		
+00000000 =FFFFFD2A                  _mtrap03	equ	_mtrap02+6		
+00000000 =FFFFFD30                  _mtrap04	equ	_mtrap03+6		
+00000000 =FFFFFD36                  _mtrap05	equ	_mtrap04+6		
+00000000 =FFFFFD3C                  _mtrap06	equ	_mtrap05+6		
+00000000 =FFFFFD42                  _mtrap07	equ	_mtrap06+6		
+00000000 =FFFFFD48                  _mtrap08	equ	_mtrap07+6		
+00000000 =FFFFFD4E                  _mtrap09	equ	_mtrap08+6		
+00000000 =FFFFFD54                  _mtrap10	equ	_mtrap09+6		
+00000000 =FFFFFD5A                  _mtrap11	equ	_mtrap10+6		
+00000000 =FFFFFD60                  _mtrap12	equ	_mtrap11+6		
+00000000 =FFFFFD66                  _mtrap13	equ	_mtrap12+6		
+00000000 =FFFFFD6C                  _mtrap14	equ	_mtrap13+6		
+00000000 =FFFFFD72                  _mtrap15	equ	_mtrap14+6		
+00000000 =FFFFFD78                  _mchkerr	equ	_mtrap15+6		;chk 
+00000000 =FFFFFD7E                  _madrerr	equ	_mchkerr+6		;address error
+00000000 =FFFFFD7E                  _mcoderr	equ	_mchkerr+6		;undefined code
+00000000 =FFFFFD84                  _mdiverr	equ	_mcoderr+6		;divide error
+00000000 =FFFFFD8A                  _mtrperr	equ	_mdiverr+6
+00000000 =FFFFFD90                  _mnocod0	equ	_mtrperr+6
+00000000 =FFFFFD96                  _mnocod1	equ	_mnocod0+6
+00000000 =FFFFFD9C                  _mspverr	equ	_mnocod1+6
+00000000 =FFFFFDA2                  _mtrace		equ	_mspverr+6
+00000000 =FFFFFDA8                  _vint_ex	equ	_mtrace+6
+00000000 =FFFFFDAE                  _mburam		equ	_vint_ex+6		;buck up ram entry
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Bit Assign
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            ; vdp_flug
+00000000 =00000000                  COLOR_ON	equ	0	; Color DMA    	1:on/ 0:off
+00000000 =00000001                  SCROLL_ON	equ	1	; Scroll DMA   	1:on/ 0:off
+00000000                            
+00000000                            ; vdp_flug1
+00000000 =00000000                  SCROLLAB	equ	0	; scroll DMA A/B
+00000000                            
+00000000                            ; sys_flug
+00000000 =00000000                  Z80		equ	0	; Z80 working
+00000000                            
+00000000                            
+00000000                            ;****************************************************************
+00000000                            ;	end of file
+00000000                            ;****************************************************************
+00000000                            ;****************************************************************
+00000000                            	include program\mdlib.s		;Library
+00000000                            ;****************************************************************
+00000000                            ;	MARS MEGA-CD Boot Check Program
+00000000                            ;					Mega Drive Libraly
+00000000                            ;
+00000000                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+00000000                            ;				SEGA ENTERPRISES,LTD.
+00000000                            ;				CS Hardware R&D Dept.
+00000000                            ;						T.Okawa
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;
+00000000                            ;****************************************************************
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Scroll DMA ÅiÉCÉìÉ^ÉâÉvÉgì‡ÉãÅ[É`ÉìÅj
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            scrolldma:
+00000000 082E 0000 002D             		btst.b	#SCROLLAB,vdp_flug1(a6)
+00000006 6600                       		bne.b	@l0			;
+00000008                            
+00000008 41F9 FFFF C200             		lea.l	scrbuffer,a0		; DMA source
+0000000E 303C 0F00                  		move.w	#$f00,d0		; Data size
+00000012 323C 2000                  		move.w	#SCR_A_TBL,d1		; DMA destination
+00000016 342E 0002                  		move.w	reg_1(a6),d2		; VDP reg #1
+0000001A 6100 0000                  		bsr	vramdma			; VRAM DMA
+0000001E 6000                       		bra.b	@l1
+00000020                            	@l0:
+00000020 41F9 FFFF D100             		lea.l	scrbufferB,a0		; DMA source
+00000026 303C 0F00                  		move.w	#$f00,d0		; Data size
+0000002A 323C 4000                  		move.w	#SCR_B_TBL,d1		; DMA destination
+0000002E 342E 0002                  		move.w	reg_1(a6),d2		; VDP reg #1
+00000032 6100 0000                  		bsr	vramdma			; VRAM DMA
+00000036                            	@l1:
+00000036 086E 0000 002D             		bchg.b	#SCROLLAB,vdp_flug1(a6)
+0000003C                            
+0000003C 4E75                       		rts
+0000003E                            
+0000003E                            
+0000003E                            ;---------------------------------------------------------------;
+0000003E                            ;		VRAM DMA
+0000003E                            ;
+0000003E                            ; IN	d0.w	data size
+0000003E                            ;	d1.w	DMA destination address
+0000003E                            ;	d2.w	VDP reg #1
+0000003E                            ;	a0.l	DMA source address
+0000003E                            ;---------------------------------------------------------------;
+0000003E                            
+0000003E                            vramdma:
+0000003E 48E7 1040                  		movem.l	d3/a1,-(a7)
+00000042                            
+00000042 082E 0000 002E             		btst.b	#Z80,sys_flug(a6)
+0000004C                            
+0000004C 43F9 00C0 0004             		lea.l	$c00004,a1
+00000052 08C2 0004                  		bset	#4,d2
+00000056 3282                       		move.w	d2,(a1)			; DMA bit = 1
+00000058                            
+00000058 E248                       		lsr.w	#1,d0			; set DMA length
+0000005A 3600                       		move.w	d0,d3
+0000005C 0243 00FF                  		and.w	#$0ff,d3
+00000060 0043 9300                  		or.w	#$9300,d3
+00000064 3283                       		move.w	d3,(a1)
+00000066 E048                       		lsr.w	#8,d0
+00000068 0040 9400                  		or.w	#$9400,d0
+0000006C 3280                       		move.w	d0,(a1)
+0000006E                            
+0000006E 2608                       		move.l	a0,d3			; set DMA source address
+00000070 0283 00FF FFFF             		and.l	#$ffffff,d3
+00000076 E28B                       		lsr.l	#1,d3
+00000078 303C 9500                  		move.w	#$9500,d0
+0000007C 1003                       		move.b	d3,d0
+0000007E 3280                       		move.w	d0,(a1)
+00000080 E08B                       		lsr.l	#8,d3
+00000082 303C 9600                  		move.w	#$9600,d0
+00000086 1003                       		move.b	d3,d0
+00000088 3280                       		move.w	d0,(a1)
+0000008A E04B                       		lsr.w	#8,d3
+0000008C 303C 9700                  		move.w	#$9700,d0
+00000090 1003                       		move.b	d3,d0
+00000092 3280                       		move.w	d0,(a1)
+00000094                            
+00000094 3001                       		move.w	d1,d0			; set DMA destination address
+00000096 E048                       		lsr.w	#8,d0
+00000098 EC48                       		lsr.w	#6,d0
+0000009A 0040 0080                  		or.w	#$80,d0
+0000009E 3F00                       		move.w	d0,-(a7)
+000000A0 3001                       		move.w	d1,d0
+000000A2 0240 3FFF                  		and.w	#$3fff,d0
+000000A6 0040 4000                  		or.w	#$4000,d0
+000000AA 3F00                       		move.w	d0,-(a7)
+000000AC 329F                       		move.w	(a7)+,(a1)
+000000AE 329F                       		move.w	(a7)+,(a1)
+000000B0                            
+000000B0 0882 0004                  		bclr	#4,d2			; DMA bit = 0
+000000B4 3282                       		move.w	d2,(a1)
+000000B6 082E 0000 002E             		btst.b	#Z80,sys_flug(a6)
+000000C0                            
+000000C0 4CDF 0208                  		movem.l	(a7)+,d3/a1
+000000C4 4E75                       		rts
+000000C6                            
+000000C6                            
+000000C6                            ;---------------------------------------------------------------;
+000000C6                            ;		CRAM DMA
+000000C6                            ;
+000000C6                            ; IN	d2.w	VDP reg #1
+000000C6                            ;	a0.l	DMA source address
+000000C6                            ;---------------------------------------------------------------;
+000000C6                            
+000000C6                            cramdma:
+000000C6 48E7 9040                  		movem.l	d0/d3/a1,-(a7)
+000000CA                            
+000000CA 082E 0000 002E             		btst.b	#Z80,sys_flug(a6)
+000000D4                            
+000000D4 43F9 00C0 0004             		lea.l	$c00004,a1
+000000DA 08C2 0004                  		bset	#4,d2
+000000DE 3282                       		move.w	d2,(a1)			; DMA bit = 1
+000000E0                            
+000000E0 32BC 9340                  		move.w	#$9340,(a1)
+000000E4 32BC 9400                  		move.w	#$9400,(a1)
+000000E8                            
+000000E8 2608                       		move.l	a0,d3			; set DMA source address
+000000EA 0283 00FF FFFF             		and.l	#$ffffff,d3
+000000F0 E28B                       		lsr.l	#1,d3
+000000F2 303C 9500                  		move.w	#$9500,d0
+000000F6 1003                       		move.b	d3,d0
+000000F8 3280                       		move.w	d0,(a1)
+000000FA E08B                       		lsr.l	#8,d3
+000000FC 303C 9600                  		move.w	#$9600,d0
+00000100 1003                       		move.b	d3,d0
+00000102 3280                       		move.w	d0,(a1)
+00000104 E04B                       		lsr.w	#8,d3
+00000106 303C 9700                  		move.w	#$9700,d0
+0000010A 1003                       		move.b	d3,d0
+0000010C 3280                       		move.w	d0,(a1)
+0000010E                            
+0000010E 2F3C C000 0080             		move.l	#$c0000080,-(a7)	; set DMA destination address
+00000114 329F                       		move.w	(a7)+,(a1)
+00000116 329F                       		move.w	(a7)+,(a1)
+00000118                            
+00000118 0882 0004                  		bclr	#4,d2			; DMA bit = 0
+0000011C 3282                       		move.w	d2,(a1)
+0000011E                            
+0000011E 082E 0000 002E             		btst.b	#Z80,sys_flug(a6)
+00000128                            
+00000128 4CDF 0209                  		movem.l	(a7)+,d0/d3/a1
+0000012C 4E75                       		rts
+0000012E                            
+0000012E                            
+0000012E                            ;---------------------------------------------------------------;
+0000012E                            ;	VDP initialize
+0000012E                            ;
+0000012E                            ; IN	a2.l	pointer of VDP reg. data
+0000012E                            ;	a3.l	VDP register table address
+0000012E                            ;---------------------------------------------------------------;
+0000012E                            
+0000012E                            vdpinit:
+0000012E 48E7 E0C0                  		movem.l	d0-d2/a0/a1,-(a7)
+00000132                            
+00000132 41F9 00C0 0004             		lea.l	$c00004,a0
+00000138 43F9 00C0 0000             		lea.l	$c00000,a1
+0000013E                            	@w:
+0000013E 3010                       		move.w	(a0),d0			; Wait Vblank
+00000140 0800 0003                  		btst	#3,d0
+00000144 67F8                       		beq.b	@w
+00000146                            
+00000146 343C 0100                  		move.w	#$100,d2
+0000014A 323C 8000                  		move.w	#$8000,d1		; VDP register No.
+0000014E 303C 0012                  		move.w	#18,d0			; set VDP register
+00000152                            	@l0:					;	#0 - #18
+00000152 121A                       		move.b	(a2)+,d1
+00000154 3081                       		move.w	d1,(a0)
+00000156 36C1                       		move.w	d1,(a3)+
+00000158 D242                       		add.w	d2,d1
+0000015A 51C8 FFF6                  		dbra	d0,@l0
+0000015E                            
+0000015E 20BC 4000 0000             		move.l	#$40000000,(a0)
+00000164 303C 0FFF                  		move.w	#$10000/4/4-1,d0
+00000168                            	@l1:
+00000168 22BC 0000 0000             		move.l	#0,(a1)
+0000016E 22BC 0000 0000             		move.l	#0,(a1)
+00000174 22BC 0000 0000             		move.l	#0,(a1)
+0000017A 22BC 0000 0000             		move.l	#0,(a1)
+00000180 51C8 FFE6                  		dbra	d0,@l1
+00000184                            
+00000184 4281                       		clr.l	d1
+00000186 20BC 4000 0010             		move.l	#$40000010,(a0)
+0000018C 303C 0004                  		move.w	#80/4/4-1,d0		; V scroll RAM clear
+00000190                            	@l2:
+00000190 2281                       		move.l	d1,(a1)
+00000192 2281                       		move.l	d1,(a1)
+00000194 2281                       		move.l	d1,(a1)
+00000196 2281                       		move.l	d1,(a1)
+00000198 51C8 FFF6                  		dbra	d0,@l2
+0000019C                            
+0000019C 20BC C000 0000             		move.l	#$c0000000,(a0)		; color RAM clear
+000001A2 303C 0007                  		move.w	#$80/4/4-1,d0
+000001A6                            	@l3:
+000001A6 2281                       		move.l	d1,(a1)
+000001A8 2281                       		move.l	d1,(a1)
+000001AA 2281                       		move.l	d1,(a1)
+000001AC 2281                       		move.l	d1,(a1)
+000001AE 51C8 FFF6                  		dbra	d0,@l3
+000001B2                            
+000001B2 4CDF 0307                  		movem.l	(a7)+,d0-d2/a0/a1
+000001B6 4E75                       		rts
+000001B8                            
+000001B8                            
+000001B8                            ;---------------------------------------------------------------;
+000001B8                            ;	Z80 Bus Request
+000001B8                            ;---------------------------------------------------------------;
+000001B8                            
+000001B8                            z80busreq:
+000001B8 08F9 0000 00A1 1100        		bset.b	#0,z_brq
+000001C0                            	@wz:
+000001C0 0839 0000 00A1 1100        		btst.b	#0,z_brq
+000001C8 66F6                       		bne.b	@wz
+000001CA 4E75                       		rts
+000001CC                            
+000001CC                            
+000001CC                            ;---------------------------------------------------------------;
+000001CC                            ;	Z80 Bus Request off
+000001CC                            ;---------------------------------------------------------------;
+000001CC                            
+000001CC                            z80busreqoff:
+000001CC 08B9 0000 00A1 1100        		bclr.b	#0,z_brq
+000001D4 4E75                       		rts
+000001D6                            
+000001D6                            
+000001D6                            ;****************************************************************
+000001D6                            ;	end of file
+000001D6                            ;****************************************************************
+000001D6                            ;****************************************************************
+000001D6                            	
+000001D6                            	org workbase
+00FF0000                            entry:
+00FF0000                            	;cargo culted init stuff
+00FF0000 7000                       	moveq	#0,d0
+00FF0002 23C0 00A1 2010             	move.l	d0,command_0
+00FF0008 23C0 00A1 2014             	move.l	d0,command_4
+00FF000E 23C0 00A1 2018             	move.l	d0,command_8
+00FF0014 23C0 00A1 201C             	move.l	d0,command_12
+00FF001A                            
+00FF001A 46FC 2700                  	move.w	#$2700,sr ;disable interrupts
+00FF001E 41F9 0000 0000             	lea	_vint,a0
+00FF0024 23C8 FFFF FD08             	move.l	a0,_mlevel6+2 ;set V interrupt vector
+00FF002A 46FC 2000                  	move.w	#$2000,sr ;enable interrupts
+00FF002E                            	
+00FF002E                            	;magenta background
+00FF002E 7000                       	moveq #0,d0
+00FF0030 4EB9 0000 0000             	jsr cramaddr
+00FF0036 303C 0F0F                  	move.w #$f0f,d0 ;magenta
+00FF003A 33C0 00C0 0000             	move.w d0,$c00000
+00FF0040                            	
+00FF0040 7000                       	moveq #0,d0
+00FF0042 7200                       	moveq #0,d1
+00FF0044 41F9 0000 0000             	lea hello_text,a0
+00FF004A 4EB9 0000 0000             	jsr printstr
+00FF0050                            	
+00FF0050 7005                       	moveq #5,d0
+00FF0052 7202                       	moveq #2,d1
+00FF0054 41F9 0000 0000             	lea penis_text,a0
+00FF005A 4EB9 0000 0000             	jsr printstr
+00FF0060                            	
+00FF0060 7000                       	moveq #0,d0
+00FF0062 7204                       	moveq #4,d1
+00FF0064 343C ABCD                  	move.w #$ABCD,d2
+00FF0068 4EB9 0000 0000             	jsr printword
+00FF006E                            	
+00FF006E                            	; move.w #$c000,d0
+00FF006E                            	; jsr vramaddr
+00FF006E                            	; move.w #$21,d0
+00FF006E                            	; move.w d0,$c00000
+00FF006E                            	
+00FF006E                            main_loop:
+00FF006E 4DF9 FFFF E000             	lea.l systembase,a6
+00FF0074                            
+00FF0074 7000                       	moveq #0,d0
+00FF0076 7204                       	moveq #4,d1
+00FF0078 342E 0030                  	move.w v_counter(a6),d2
+00FF007C 4EB9 0000 0000             	jsr printword
+00FF0082 3D7C 0001 0040             	move.w #1,vblank_flag(a6)
+00FF0088                            spin_loop:
+00FF0088 302E 0040                  	move.w vblank_flag(a6),d0
+00FF008C 6600 FFFA                  	bne spin_loop
+00FF0090 4EF9 00FF 006E             	jmp main_loop
+00FF0096                            	
+00FF0096                            hello_text:
+00FF0096 4865 6C6C 6F20 776F 726C+  	dc.b "Hello world!",0
+00FF00A3                            	
+00FF00A3                            penis_text:
+00FF00A3 7065 6E69 7300             	dc.b "penis",0
+00FF00A9                            
+00FF00A9 00                         	align $2
+00FF00AA                            
+00FF00AA                            ;---------------------------------------------------------------;
+00FF00AA                            ;	Prints a string using the font loaded by the BIOS
+00FF00AA                            ;
+00FF00AA                            ; IN	a0	Pointer to the string
+00FF00AA                            ;	d0.w	String x position
+00FF00AA                            ;	d1.w	String y position
+00FF00AA                            ;---------------------------------------------------------------;
+00FF00AA                            printstr:
+00FF00AA                            	;1. calculate vram address. BIOS initializes the VDP to 64x64 (so
+00FF00AA                            	;128 bytes per line) with a base address of $c000 for plane 1.
+00FF00AA 33FC 8F02 00C0 0004        	move.w #$8f02,$c00004 ;set vdp increment to 2 bytes (should already be set but just to make sure)
+00FF00B2 E340                       	asl.w #1,d0 ;multiply x pos by 2 (words->bytes)
+00FF00B4 EF41                       	asl.w #7,d1 ;multiply y pos by 128
+00FF00B6 D041                       	add.w d1,d0 ;add y pos to x pos
+00FF00B8 0640 C000                  	add.w #$c000,d0 ;add base address to calculated area
+00FF00BC 4EB9 0000 0000             	jsr vramaddr ;set vdp to write to the calculated address
+00FF00C2 7000                       	moveq #0,d0 ;clear d0
+00FF00C4                            @printloop:
+00FF00C4 1018                       	move.b (a0)+,d0 ;move text to d0
+00FF00C6 6700 0000                  	beq @doneprint ;if we hit the null terminator, exit
+00FF00CA 33C0 00C0 0000             	move.w d0,$c00000 ;write to vram
+00FF00D0 6000 FFF2                  	bra @printloop
+00FF00D4                            @doneprint
+00FF00D4 4E75                       	rts
+00FF00D6                            	
+00FF00D6                            ;---------------------------------------------------------------;
+00FF00D6                            ;	Prints a word using the font loaded by the BIOS
+00FF00D6                            ;
+00FF00D6                            ; IN	d0.w	x position
+00FF00D6                            ;	d1.w	y position
+00FF00D6                            ;	d2.w	word to print
+00FF00D6                            ;---------------------------------------------------------------;
+00FF00D6                            printword:
+00FF00D6                            	;calculate vram address. BIOS initializes the VDP to 64x64 (so
+00FF00D6                            	;128 bytes per line) with a base address of $c000 for plane 1.
+00FF00D6 33FC 8F02 00C0 0004        	move.w #$8f02,$c00004 ;set vdp increment to 2 bytes (should already be set but just to make sure)
+00FF00DE E340                       	asl.w #1,d0 ;multiply x pos by 2 (words->bytes)
+00FF00E0 EF41                       	asl.w #7,d1 ;multiply y pos by 128
+00FF00E2 D041                       	add.w d1,d0 ;add y pos to x pos
+00FF00E4 0640 C000                  	add.w #$c000,d0 ;add base address to calculated area
+00FF00E8 4EB9 0000 0000             	jsr vramaddr ;set vdp to write to the calculated address
+00FF00EE                            	;print high nybble of high byte
+00FF00EE 3002                       	move.w d2,d0
+00FF00F0 E958                       	rol.w #4,d0 ;isolate high nybble of the word
+00FF00F2 0240 000F                  	and.w #$f,d0
+00FF00F6 4EB9 0000 0000             	jsr printnybble
+00FF00FC                            	;print low nybble of high byte
+00FF00FC 3002                       	move.w d2,d0
+00FF00FE E048                       	lsr.w #8,d0
+00FF0100 0240 000F                  	and.w #$f,d0
+00FF0104 4EB9 0000 0000             	jsr printnybble
+00FF010A                            	;print high nybble of low byte
+00FF010A 3002                       	move.w d2,d0
+00FF010C E848                       	lsr.w #4,d0
+00FF010E 0240 000F                  	and.w #$f,d0
+00FF0112 4EB9 0000 0000             	jsr printnybble
+00FF0118                            	;print low nybble of low byte
+00FF0118 3002                       	move.w d2,d0
+00FF011A 0240 000F                  	and.w #$f,d0
+00FF011E 4EB9 0000 0000             	jsr printnybble
+00FF0124                            	
+00FF0124 4E75                       	rts
+00FF0126                            
+00FF0126                            ;---------------------------------------------------------------;
+00FF0126                            ;	Utility function that writes a nybble to VRAM
+00FF0126                            ;
+00FF0126                            ; IN	d0.w	nybble to print
+00FF0126                            ;---------------------------------------------------------------;
+00FF0126                            
+00FF0126                            printnybble:
+00FF0126 0C40 000A                  	cmp.w #$a,d0
+00FF012A 6500 0000                  	bcs @nine_or_less
+00FF012E 0640 0037                  	add.w #'A'-$a,d0
+00FF0132 6000 0000                  	bra @done
+00FF0136                            @nine_or_less:
+00FF0136 0640 0030                  	add.w #'0',d0
+00FF013A                            @done:
+00FF013A 33C0 00C0 0000             	move.w d0,$c00000
+00FF0140 4E75                       	rts
+00FF0142                            	
+00FF0142                            
+00FF0142                            ;---------------------------------------------------------------;
+00FF0142                            ;	Sets CRAM to write to given address
+00FF0142                            ;
+00FF0142                            ; IN	d0.w	Address to write to in CRAM
+00FF0142                            ;---------------------------------------------------------------;
+00FF0142                            
+00FF0142                            cramaddr:
+00FF0142 48A7 8000                  	movem.w d0,-(a7) ;save address
+00FF0146 0240 3FFF                  	and.w #$3fff,d0 ;mask off last two bits
+00FF014A 0040 C000                  	or.w #$c000,d0 ;add cram write command
+00FF014E 33C0 00C0 0004             	move.w d0,$c00004 ;write first word to vdp
+00FF0154                            	
+00FF0154 4C9F 0001                  	movem.w (a7)+,d0 ;retrieve address
+00FF0158 E558                       	rol.w #2,d0 ;last 2 bits -> first 2 bits
+00FF015A 0240 0003                  	and.w #3,d0 ;mask off everything but first 2 bits
+00FF015E 33C0 00C0 0004             	move.w d0,$c00004 ;write second word to vdp
+00FF0164 4E75                       	rts
+00FF0166                            	
+00FF0166                            ;---------------------------------------------------------------;
+00FF0166                            ;	Sets VRAM to write to given address
+00FF0166                            ;
+00FF0166                            ; IN	d0.w	Address to write to in CRAM
+00FF0166                            ;---------------------------------------------------------------;
+00FF0166                            
+00FF0166                            vramaddr:
+00FF0166 48A7 8000                  	movem.w d0,-(a7) ;save address
+00FF016A 0240 3FFF                  	and.w #$3fff,d0 ;mask off last two bits
+00FF016E 0040 4000                  	or.w #$4000,d0 ;add vram write command
+00FF0172 33C0 00C0 0004             	move.w d0,$c00004 ;write first word to vdp
+00FF0178                            	
+00FF0178 4C9F 0001                  	movem.w (a7)+,d0 ;retrieve address
+00FF017C E558                       	rol.w #2,d0 ;last 2 bits -> first 2 bits
+00FF017E 0240 0003                  	and.w #3,d0 ;mask off everything but first 2 bits
+00FF0182 33C0 00C0 0004             	move.w d0,$c00004 ;write second word to vdp
+00FF0188 4E75                       	rts
+00FF018A                            
+00FF018A                            ;---------------------------------------------------------------*
+00FF018A                            ;	V interrupt
+00FF018A                            ;---------------------------------------------------------------*
+00FF018A                            
+00FF018A                            _vint:
+00FF018A 48E7 FFFE                  		movem.l	d0-d7/a0-a6,-(a7)
+00FF018E                            		
+00FF018E 4DF9 FFFF E000             		lea.l	systembase,a6
+00FF0194                            
+00FF0194                            		; bset.b	#IFL2,_iflreg		; SUBCPU Interrupt
+00FF0194                            
+00FF0194                            		; btst.b	#SCROLL_ON,vdp_flug(a6)
+00FF0194                            		; beq.b	@v2
+00FF0194                            		; bsr	scrolldma		; „Çπ„ÇØ„É≠„Éº„É´„ÉÜ„Éº„Éñ„É´„ÅÆÔº§Ôº≠Ôº°
+00FF0194                            	; @v2:
+00FF0194                            		; btst.b	#COLOR_ON,vdp_flug(a6)
+00FF0194                            		; beq.b	@cend
+00FF0194                            		; lea.l	colorbuffer,a0		; color data address
+00FF0194                            		; move.w	reg_1(a6),d2		; VDP reg #1
+00FF0194                            		; bsr	cramdma			; CRAM DMA
+00FF0194                            	; @cend:
+00FF0194 066E 0001 0030             		add.w #1,v_counter(a6)
+00FF019A 3D7C 0000 0040             		move.w #0,vblank_flag(a6) 
+00FF01A0                            	; @end:
+00FF01A0 4CDF 7FFF                  		movem.l	(a7)+,d0-d7/a0-a6
+00FF01A4 4E73                       		rte
+00FF01A6 4E73                       		rte
+00FF01A8                            

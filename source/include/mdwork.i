@@ -53,6 +53,7 @@ v_counter	equ	$0030		; 2	; V interrupt counter
 w_counter	equ	$0032		; 2	; wait counter
 dmaoffset	equ	$0034		; 4	; DMA offset address
 h_counter	equ	$0038		; 2	; H interrupt counter
+vblank_flag	equ	$0040		; 2	; flag for when vblank is over
 
 textbuffer	equ	$0100		; $80	; テキスト表示用
 
