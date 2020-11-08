@@ -1,0 +1,906 @@
+00000000                            ;****************************************************************
+00000000                            ;	MARS MEGA-CD Boot Check Program
+00000000                            ;					System program
+00000000                            ;
+00000000                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+00000000                            ;				SEGA ENTERPRISES,LTD.
+00000000                            ;				CS Hardware R&D Dept.
+00000000                            ;						T.Okawa
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Verion 1.0				7/4/1994
+00000000                            ;****************************************************************
+00000000                            
+00000000                            ; include
+00000000                            	include		include\cdmap.i
+00000000                            ;***************************************************************;
+00000000                            ;	MARS MEGA-CD Boot Check Program
+00000000                            ;					SUBCPU Map
+00000000                            ;
+00000000                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+00000000                            ;				SEGA ENTERPRISES,LTD.
+00000000                            ;				CS Hardware R&D Dept.
+00000000                            ;						T.Okawa
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;
+00000000                            ;***************************************************************;
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000 =00004E73                  RTE_CODE	equ	$4e73
+00000000 =00004EF9                  JMP_CODE	equ	$4ef9
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;				label
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            ; label		      ; address		; size		; info.
+00000000                            
+00000000                            
+00000000 =00080000                  word_ram	equ	$00080000			; word RAM 2M mode
+00000000 =000C0000                  word_ram_1m	equ	$000c0000			; word RAM 1M mode
+00000000                            
+00000000 =FFFE0000                  backup_ram	equ	$fffe0000	; $3fff		; backup RAM
+00000000                            
+00000000 =FFFF0000                  rf5c164		equ	$ffff0000			; pcm RF5C164
+00000000 =FFFF0001                  pcm_vol		equ	$ffff0001
+00000000 =FFFF0003                  pcm_pan		equ	$ffff0003
+00000000 =FFFF0005                  pcm_fdl		equ	$ffff0005
+00000000 =FFFF0007                  pcm_fdh		equ	$ffff0007
+00000000 =FFFF0009                  pcm_lsl		equ	$ffff0009
+00000000 =FFFF000B                  pcm_lsh		equ	$ffff000b
+00000000 =FFFF000D                  pcm_st		equ	$ffff000d
+00000000 =FFFF000F                  pcm_cont	equ	$ffff000f			; pcm control (bank)
+00000000 =FFFF0011                  pcm_ch		equ	$ffff0011			; pcm channel control
+00000000 =FFFF0021                  pcm_ch0_low	equ	$ffff0021
+00000000 =FFFF0023                  pcm_ch0_high	equ	$ffff0023
+00000000 =FFFF0025                  pcm_ch1_low	equ	$ffff0025
+00000000 =FFFF0027                  pcm_ch1_high	equ	$ffff0027
+00000000 =FFFF2000                  pcm_ram		equ	$ffff2000			; pcm wave memory
+00000000                            
+00000000 =FFFF8000                  _ledreg		equ	$ffff8000	; byte		; led register
+00000000 =FFFF8003                  _memory		equ	$ffff8003	; byte		; memory mode
+00000000 =FFFF8004                  _cdcmode	equ	$ffff8004	; byte		; cdc destination
+00000000 =FFFF800A                  _dmaadrs	equ	$ffff800a	; word		; cdc DMA address
+00000000 =FFFF800E                  main_flug	equ	$ffff800e	; byte		; maincpu flug
+00000000 =FFFF800F                  sub_flug	equ	$ffff800f	; byte		; subcpu flug
+00000000 =FFFF8010                  command_0	equ	$ffff8010			; communication command
+00000000 =FFFF8012                  command_2	equ	$ffff8012			;
+00000000 =FFFF8014                  command_4	equ	$ffff8014			;
+00000000 =FFFF8016                  command_6	equ	$ffff8016			;
+00000000 =FFFF8018                  command_8	equ	$ffff8018			;
+00000000 =FFFF801A                  command_10	equ	$ffff801a			;
+00000000 =FFFF801C                  command_12	equ	$ffff801c			;
+00000000 =FFFF801E                  command_14	equ	$ffff801e			;
+00000000 =FFFF8020                  status_0	equ	$ffff8020			; communication status
+00000000 =FFFF8022                  status_2	equ	$ffff8022			;
+00000000 =FFFF8024                  status_4	equ	$ffff8024			;
+00000000 =FFFF8026                  status_6	equ	$ffff8026			;
+00000000 =FFFF8028                  status_8	equ	$ffff8028			;
+00000000 =FFFF802A                  status_10	equ	$ffff802a			;
+00000000 =FFFF802C                  status_12	equ	$ffff802c			;
+00000000 =FFFF802E                  status_14	equ	$ffff802e			;
+00000000                            
+00000000 =FFFF8030                  _timerdata	equ	$ffff8030
+00000000 =FFFF8033                  _intmask	equ	$ffff8033
+00000000                            
+00000000 =FFFF804D                  _fontcolor	equ	$ffff804d	; byte	rw	; sorce font color
+00000000 =FFFF804E                  _fontbit	equ	$ffff804e	; word	rw	; sorce font bit
+00000000 =FFFF8050                  _fontdata	equ	$ffff8050	; ->$ff8057 ro	; converted font data
+00000000                            
+00000000 =FFFF8059                  _stampsize		equ	$ffff8059	; byte	; stamp size
+00000000 =FFFF805A                  _stamp_map_base		equ	$ffff805a	; word	; stamp map base address
+00000000 =FFFF805C                  _image_vcell_size	equ	$ffff805c	; word	; image buffer v cell size
+00000000 =FFFF805E                  _image_start_adrs	equ	$ffff805e	; word	; image buffer start address
+00000000 =FFFF8060                  _image_offset		equ	$ffff8060	; word	; image buffer offset
+00000000 =FFFF8062                  _image_hdot_size	equ	$ffff8062	; word	; image buffer h dot size
+00000000 =FFFF8064                  _image_vdot_size	equ	$ffff8064	; word	; image buffer v dot size
+00000000 =FFFF8066                  _trace_vector		equ	$ffff8066	; word	; trace vector table address
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Bit assign
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            ; _iflreg
+00000000 =00000000                  IFL2		equ	0
+00000000 =00000007                  IEN2		equ	7
+00000000                            
+00000000                            ; _ledreg
+00000000 =00000000                  LEDR		equ	0
+00000000 =00000001                  LEDG		equ	1
+00000000                            
+00000000                            ; _memory
+00000000 =00000000                  RET		equ	0
+00000000 =00000001                  DMNA		equ	1
+00000000 =00000002                  MODE		equ	2
+00000000 =00000003                  PM0		equ	3
+00000000 =00000004                  PM1		equ	4
+00000000                            
+00000000                            ; _cdcmode
+00000000 =00000002                  MAINREAD	equ	2
+00000000 =00000003                  SUBREAD		equ	3
+00000000 =00000004                  PCMDMA		equ	4
+00000000 =00000005                  PRGDMA		equ	5
+00000000 =00000007                  WORDDMA		equ	7
+00000000 =00000007                  EDT		equ	7
+00000000 =00000006                  DSR		equ	6
+00000000                            
+00000000                            ; sub_flug
+00000000 =00000007                  S_READY		equ	7
+00000000                            
+00000000                            ; main_flug
+00000000 =00000007                  M_READY		equ	7
+00000000                            
+00000000                            ; _intmask
+00000000 =00000001                  IEN1		equ	1
+00000000 =00000003                  IEN3		equ	3
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	macro
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	align	xx
+00000000                            ;		xx = what to align to
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            align		macro xx
+00000000                            		cnop 0,xx
+00000000                            		endm
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	bios	xx
+00000000                            ;		xx = bios call No.
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            bios		macro	xx			; bios call macro
+00000000                            		move.w	#xx,d0
+00000000                            		jsr	_cdbios
+00000000                            		endm
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	call	xx,yy
+00000000                            ;		xx = nz,z,nc,c
+00000000                            ;		yy = jump address
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000                            call		macro	xx,yy
+00000000                            		if	strcmp(xx,"nz")
+00000000                            			beq.b	@jamp
+00000000                            		endif
+00000000                            		if	strcmp(xx,"z")
+00000000                            			bne.b	@jamp
+00000000                            		endif
+00000000                            		if	strcmp(xx,"nc")
+00000000                            			bcs.b	@jamp
+00000000                            		endif
+00000000                            		if	strcmp(xx,"c")
+00000000                            			bcc.b	@jamp
+00000000                            		endif
+00000000                            		bsr	yy
+00000000                            @jamp:
+00000000                            		endm
+00000000                            
+00000000                            ;***************************************************************;
+00000000                            ;	end of file
+00000000                            ;***************************************************************;
+00000000                            ;***************************************************************;
+00000000                            	include		include\prgram.i
+00000000                            ;***************************************************************;
+00000000                            ;	MARS MEGA-CD Boot Check Program
+00000000                            ;					Program RAM assign
+00000000                            ;
+00000000                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+00000000                            ;				SEGA ENTERPRISES,LTD.
+00000000                            ;				CS Hardware R&D Dept.
+00000000                            ;						T.Okawa
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;
+00000000                            ;***************************************************************;
+00000000                            
+00000000                            ; label		      ; address	; size		; info.
+00000000                            
+00000000 =00010000                  ap_program_area	equ	$10000	; $50000	; child process area
+00000000 =00060000                  v_counter	equ	$60000	; word		; v interrupt counter
+00000000 =00060002                  retry_counter	equ	$60002	; word		; retry counter
+00000000                            
+00000000 =00068000                  cdcbuffer	equ	$68000	; -> $6ffff	; cdc buffer ( MAX 16 sector)
+00000000 =00070000                  volumebuffer	equ	$70000	; -> $7ffff	; isso9660 volume data buffer
+00000000                            
+00000000                            
+00000000                            ;***************************************************************;
+00000000                            ;	end of file
+00000000                            ;***************************************************************;
+00000000                            ;***************************************************************;
+00000000                            	include		include\cdbios.i
+00000000                            ;=======================================================================
+00000000                            ;	cdbios.i -- include file of CD-BIOS define
+00000000                            ;	Copyright(c) 1991 eMuKei
+00000000                            ;	Written by eMuKei			on Mar.13,1991(Ver.0.10)
+00000000                            ;	Updated					on Apr. 5,1991(Ver.0.20)
+00000000                            ;	Updated					on Apr.11,1991(Ver.0.30)
+00000000                            ;	Updated					on Apr.15,1991(Ver.0.31)
+00000000                            ;	Updated (BOOT)				on Jul.27,1991(Ver.0.40)
+00000000                            ;	Updated (MSCSEEK1)			on Spt.18,1991(Ver.0.50)
+00000000                            ;	Updated (BRM___)			on Spt.30,1991(Ver.0.60)
+00000000                            ;	Updated (SCD___)			on Oct. 3,1991(Ver.0.70)
+00000000                            ;	Updated (LED___)			on Oct.11,1991(Ver.0.80)
+00000000                            ;	Updated (CDBPAUSE)			on Oct.17,1991(Ver.0.81)
+00000000                            ;	Updated (CDCSTARTM)			on Oct.24,1991(Ver.0.82)
+00000000                            ;	Updated (SCDINIT)			on Oct.27,1991(Ver.0.83)
+00000000                            ;	Updated (WONDER___)			on Oct.30,1991(Ver.0.84)
+00000000                            ;=======================================================================
+00000000                            ;-----------------------------------------------------------------------
+00000000                            ;	CONSTANT
+00000000                            ;-----------------------------------------------------------------------
+00000000 =FFFFFFFF                  ENDOFTOCTBL	equ	-1
+00000000 =00000000                  LEDREADY	equ	0
+00000000 =00000001                  LEDDISCIN	equ	1
+00000000 =00000002                  LEDACCESS	equ	2
+00000000 =00000003                  LEDSTANDBY	equ	3
+00000000 =00000004                  LEDERROR	equ	4
+00000000 =00000005                  LEDMODE5	equ	5
+00000000 =00000006                  LEDMODE6	equ	6
+00000000 =00000007                  LEDMODE7	equ	7
+00000000 =FFFFFFFF                  LEDSYSTEM	equ	-1
+00000000 =00000750                  SCDSCRATCHSIZE	equ	$750
+00000000 =00000640                  BRMSCRATCHSIZE	equ	$640
+00000000                            ;-----------------------------------------------------------------------
+00000000                            ;	REQUEST CODE
+00000000                            ;-----------------------------------------------------------------------
+00000000 =00000002                  MSCSTOP		equ	$0002		;
+00000000 =00000003                  MSCPAUSEON	equ	$0003		;
+00000000 =00000004                  MSCPAUSEOFF	equ	$0004		;
+00000000 =00000005                  MSCSCANFF	equ	$0005		;
+00000000 =00000006                  MSCSCANFR	equ	$0006		;
+00000000 =00000007                  MSCSCANOFF	equ	$0007		;
+00000000 =00000008                  ROMPAUSEON	equ	$0008		;
+00000000 =00000009                  ROMPAUSEOFF	equ	$0009		;
+00000000 =0000000A                  DRVOPEN		equ	$000a		;
+00000000                            ;
+00000000 =00000010                  DRVINIT		equ	$0010		;(N)
+00000000 =00000011                  MSCPLAY		equ	$0011		;(N)
+00000000 =00000012                  MSCPLAY1	equ	$0012		;(N)
+00000000 =00000013                  MSCPLAYR	equ	$0013		;(N)
+00000000 =00000014                  MSCPLAYT	equ	$0014		;(T)
+00000000 =00000015                  MSCSEEK		equ	$0015		;(N)
+00000000 =00000016                  MSCSEEKT	equ	$0016		;(T)
+00000000 =00000017                  ROMREAD		equ	$0017		;(S)
+00000000 =00000018                  ROMSEEK		equ	$0018		;(S)
+00000000 =00000019                  MSCSEEK1	equ	$0019		;(N)
+00000000                            ;
+00000000 =0000001E                  TESTENTRY	equ	$001e
+00000000 =0000001F                  TESTENTRYLOOP	equ	$001f
+00000000 =00000020                  ROMREADN	equ	$0020		;(S,N)
+00000000 =00000021                  ROMREADE	equ	$0021		;(S,S)
+00000000                            ;-----------------------------------------------------------------------
+00000000 =00000080                  CDBCHK		equ	$0080		;
+00000000 =00000081                  CDBSTAT		equ	$0081		;
+00000000 =00000082                  CDBTOCWRITE	equ	$0082		;
+00000000 =00000083                  CDBTOCREAD	equ	$0083		;
+00000000 =00000084                  CDBPAUSE	equ	$0084		;
+00000000 =00000085                  FDRSET		equ	$0085		;
+00000000 =00000086                  FDRCHG		equ	$0086		;
+00000000 =00000087                  CDCSTART	equ	$0087		;
+00000000 =00000088                  CDCSTARTM	equ	$0088		;
+00000000 =00000089                  CDCSTOP		equ	$0089		;
+00000000 =0000008A                  CDCSTAT		equ	$008a		;
+00000000 =0000008B                  CDCREAD		equ	$008b		;
+00000000 =0000008C                  CDCTRN		equ	$008c		;
+00000000 =0000008D                  CDCACK		equ	$008d		;
+00000000 =0000008E                  SCDINIT		equ	$008e		;
+00000000 =0000008F                  SCDSTART	equ	$008f		;
+00000000 =00000090                  SCDSTOP		equ	$0090		;
+00000000 =00000091                  SCDSTAT		equ	$0091		;
+00000000 =00000092                  SCDREAD		equ	$0092		;
+00000000 =00000093                  SCDPQ		equ	$0093		;
+00000000 =00000094                  SCDPQL		equ	$0094		;
+00000000 =00000095                  LEDSET		equ	$0095		;
+00000000 =00000096                  CDCSETMODE	equ	$0096		;
+00000000 =00000097                  WONDERREQ	equ	$0097		;
+00000000 =00000098                  WONDERCHK	equ	$0098		;
+00000000                            ;-----------------------------------------------------------------------
+00000000 =00000000                  CBTINIT		equ	$0000		;
+00000000 =00000001                  CBTINT		equ	$0001		;
+00000000 =00000002                  CBTOPENDISC	equ	$0002		;
+00000000 =00000003                  CBTOPENSTAT	equ	$0003		;
+00000000 =00000004                  CBTCHKDISC	equ	$0004		;
+00000000 =00000005                  CBTCHKSTAT	equ	$0005		;
+00000000 =00000006                  CBTIPDISC	equ	$0006		;
+00000000 =00000007                  CBTIPSTAT	equ	$0007		;
+00000000 =00000008                  CBTSPDISC	equ	$0008		;
+00000000 =00000009                  CBTSPSTAT	equ	$0009		;
+00000000                            ;-----------------------------------------------------------------------
+00000000 =00000000                  BRMINIT		equ	$0000		;
+00000000 =00000001                  BRMSTAT		equ	$0001		;
+00000000 =00000002                  BRMSERCH	equ	$0002		;
+00000000 =00000003                  BRMREAD		equ	$0003		;
+00000000 =00000004                  BRMWRITE	equ	$0004		;
+00000000 =00000005                  BRMDEL		equ	$0005		;
+00000000 =00000006                  BRMFORMAT	equ	$0006		;
+00000000 =00000007                  BRMDIR		equ	$0007		;
+00000000 =00000008                  BRMVERIFY	equ	$0008		;
+00000000                            ;-----------------------------------------------------------------------
+00000000                            ;	JUMP TABLE
+00000000                            ;-----------------------------------------------------------------------
+00000000 =00005F40                  _adrerr         equ              $00005F40
+00000000 =00005EA0                  _bootstat       equ              $00005EA0
+00000000 =00005F16                  _buram          equ              $00005F16
+00000000 =00005F22                  _cdbios         equ              $00005F22
+00000000 =00005F1C                  _cdboot         equ              $00005F1C
+00000000 =00005E80                  _cdstat         equ              $00005E80
+00000000 =00005F52                  _chkerr         equ              $00005F52
+00000000 =00005F46                  _coderr         equ              $00005F46
+00000000 =00005F4C                  _deverr         equ              $00005F4C
+00000000 =00005F76                  _level1         equ              $00005F76
+00000000 =00005F7C                  _level2         equ              $00005F7C
+00000000 =00005F82                  _level3         equ              $00005F82	;timer interrupt
+00000000 =00005F88                  _level4         equ              $00005F88
+00000000 =00005F8E                  _level5         equ              $00005F8E
+00000000 =00005F94                  _level6         equ              $00005F94
+00000000 =00005F9A                  _level7         equ              $00005F9A
+00000000 =00005F6A                  _nocod0         equ              $00005F6A
+00000000 =00005F70                  _nocod1         equ              $00005F70
+00000000 =00005F0A                  _setjmptbl      equ              $00005F0A
+00000000 =00005F5E                  _spverr         equ              $00005F5E
+00000000 =00005F64                  _trace          equ              $00005F64
+00000000 =00005FA0                  _trap00         equ              $00005FA0
+00000000 =00005FA6                  _trap01         equ              $00005FA6
+00000000 =00005FAC                  _trap02         equ              $00005FAC
+00000000 =00005FB2                  _trap03         equ              $00005FB2
+00000000 =00005FB8                  _trap04         equ              $00005FB8
+00000000 =00005FBE                  _trap05         equ              $00005FBE
+00000000 =00005FC4                  _trap06         equ              $00005FC4
+00000000 =00005FCA                  _trap07         equ              $00005FCA
+00000000 =00005FD0                  _trap08         equ              $00005FD0
+00000000 =00005FD6                  _trap09         equ              $00005FD6
+00000000 =00005FDC                  _trap10         equ              $00005FDC
+00000000 =00005FE2                  _trap11         equ              $00005FE2
+00000000 =00005FE8                  _trap12         equ              $00005FE8
+00000000 =00005FEE                  _trap13         equ              $00005FEE
+00000000 =00005FF4                  _trap14         equ              $00005FF4
+00000000 =00005FFA                  _trap15         equ              $00005FFA
+00000000 =00005F58                  _trperr         equ              $00005F58
+00000000 =00005F28                  _usercall0      equ              $00005F28	;init
+00000000 =00005F2E                  _usercall1      equ              $00005F2E	;main
+00000000 =00005F34                  _usercall2      equ              $00005F34	;Vint
+00000000 =00005F3A                  _usercall3      equ              $00005F3A	;not define
+00000000 =00005EA6                  _usermode       equ              $00005EA6
+00000000 =00005F10                  _waitvsync	equ		 $00005F10
+00000000                            
+00000000                            ;=======================================================================
+00000000                            ;	end of file
+00000000                            ;=======================================================================
+00000000                            ;=======================================================================
+00000000                            	include		include\cdcmd.i
+00000000                            ;****************************************************************
+00000000                            ;	Sega CD Freeloader: CD Commands
+00000000                            ;
+00000000                            ;	Copyright Nathan Misner
+00000000                            ;
+00000000                            ;	Command enumerations
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;						Created 11/1/20
+00000000                            ;****************************************************************
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Sub CPU commands (sent to command_0, ack from status_0)
+00000000                            ;---------------------------------------------------------------;
+00000000                            
+00000000 =00000000                  CMD_LOADINTER	equ 0 ;load the main CPU interface code into word ram
+00000000 =00000001                  CMD_OPENDRV	equ 1 ;open the cd drive
+00000000 =00000002                  CMD_CLOSEDRV	equ 2 ;close the cd drive
+00000000 =00000003                  CMD_DRVSTATUS	equ 3 ;get the drive status
+00000000 =00000004                  CMD_LOADMAIN	equ 4 ;load the main CPU code off the disc 
+00000000 =00000005                  CMD_LOADSUB	equ 5 ;load the sub CPU code off the disc and start execution
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Command results (read from status_2)
+00000000                            ;---------------------------------------------------------------;
+00000000 =00000000                  RES_WAIT	equ 0 ;command recieved and in progress
+00000000 =00000001                  RES_OK		equ 1 ;if the command succeeded
+00000000 =00000002                  RES_ERR		equ 2 ;if the command failed
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Drive status results (for CMD_DRVSTATUS, read from status_2)
+00000000                            ;---------------------------------------------------------------;
+00000000 =00000000                  DRV_OPEN	equ 0 ;if the drive is open
+00000000 =00000001                  DRV_DISC	equ 1 ;if there's a disc in the drive
+00000000 =00000002                  DRV_EMPTY	equ 2 ;if the drive is empty
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	Sub CPU flags (sent to command_2)
+00000000                            ;---------------------------------------------------------------;
+00000000 =00004849                  FLG_ACTIVATE	equ "HI" ;tell sub cpu to run the command in command_0
+00000000 =00004849                  FLG_ACTIVATE	equ "HI" ;tell sub cpu to run the command in command_0
+00000000                            
+00000000                            	list
+00000000                            
+00000000                            
+00000000                            ;---------------------------------------------------------------;
+00000000                            ;	system headder
+00000000                            ;---------------------------------------------------------------;
+00000000                            	org	$6000
+00006000                            	
+00006000                            sub_headder:
+00006000 4D41 494E 5F41 505F 5F5F+  	dc.b	'MAIN_AP____',0		; module name, flag
+0000600C 0000 0000                  	dc.w	$0000,0			; version,type
+00006010 0000 0000                  	dc.l	0			; ptr. next module
+00006014 0000 0000                  	dc.l	0			; module size
+00006018 0000 0000                  	dc.l	sub_start-sub_headder	; Start address
+0000601C 0000 0000                  	dc.l	0			; Work Ram size
+00006020                            
+00006020                            sub_start:
+00006020 0000                       	dc.w	sub_init-sub_start	; initialize routine
+00006022 0000                       	dc.w	sub_main-sub_start	; main routine
+00006024 0000                       	dc.w	sub_int2-sub_start	; level 2 interrupt routine
+00006026 0000                       	dc.w	sub_user-sub_start	; user defined routine
+00006028 0000                       	dc.w	0
+0000602A                            
+0000602A                            
+0000602A                            ;---------------------------------------------------------------;
+0000602A                            ;	initialize routine
+0000602A                            ;---------------------------------------------------------------;
+0000602A                            
+0000602A                            sub_init:
+0000602A 6100 0000                  	bsr	comm_init		; communication initialize
+0000602E                            
+0000602E 41FA 0000                  	lea	gr_int(pc),a0		; graphic interrupt vector set
+00006032 33FC 4EF9 0000 5F76        	move.w	#JMP_CODE,_level1
+0000603A 23C8 0000 5F78             	move.l	a0,_level1+2
+00006040                            
+00006040 41FA 0000                  	lea	_int3(pc),a0		; timer interrupt vector set
+00006044 33FC 4EF9 0000 5F82        	move.w	#JMP_CODE,_level3
+0000604C 23C8 0000 5F84             	move.l	a0,_level3+2
+00006052                            
+00006052 4E75                       	rts
+00006054                            
+00006054                            
+00006054                            ;---------------------------------------------------------------;
+00006054                            ;	level 1 interrupt routine
+00006054                            ;---------------------------------------------------------------;
+00006054                            
+00006054                            gr_int:
+00006054 4E73                       	rte
+00006056                            
+00006056                            
+00006056                            ;---------------------------------------------------------------;
+00006056                            ;	level 2 interrupt routine
+00006056                            ;---------------------------------------------------------------;
+00006056                            
+00006056                            sub_int2:
+00006056 5279 0006 0000             	addq.w	#1,v_counter
+0000605C                            
+0000605C 4E75                       	rts
+0000605E                            
+0000605E                            
+0000605E                            ;---------------------------------------------------------------;
+0000605E                            ;	level 3 interrupt routine
+0000605E                            ;---------------------------------------------------------------;
+0000605E                            
+0000605E                            _int3:
+0000605E 4E73                       	rte
+00006060                            
+00006060                            
+00006060                            ;---------------------------------------------------------------;
+00006060                            ;	subcpu main routine
+00006060                            ;---------------------------------------------------------------;
+00006060                            
+00006060                            sub_main:
+00006060 33FC 4849 FFFF 8022        	move.w #FLG_ACTIVATE,status_2 ;let the main cpu know we're ready
+00006068                            
+00006068                            @activate_loop: ;wait for activate command to be sent to command_0
+00006068                            		;before starting the command processing step
+00006068                            		
+00006068 3039 FFFF 8012             	move.w command_2,d0
+0000606E 0C40 4849                  	cmp.w #FLG_ACTIVATE,d0
+00006072 6600 FFF4                  	bne @activate_loop
+00006076                            	
+00006076                            @command_loop: ;read a command, then go to that command's function
+00006076 7000                       	moveq #0,d0 ;clear d0 upper word
+00006078 3039 FFFF 8010             	move.w command_0,d0 ;read the command
+0000607E 33C0 FFFF 8020             	move.w d0,status_0 ;acknowledge that we're running the command
+00006084 33FC 0000 FFFF 8022        	move.w #RES_WAIT,status_2 ;set the status to "wait for processing"
+0000608C E580                       	asl.l #2,d0 ;convert the command number to its index in the table
+0000608E 3040                       	move.w d0,a0
+00006090 2068 0000                  	move.l command_table(a0),a0
+00006094 4E90                       	jsr (a0) ;run the command function
+00006096 6000 FFD0                  	bra @activate_loop
+0000609A                            	
+0000609A                            	align $2
+0000609A                            command_table:
+0000609A 0000 0000                  	dc.l func_loadinter
+0000609E                            	; dc.l func_opendrv
+0000609E                            	; dc.l func_closedrv
+0000609E                            	; dc.l func_drvstatus
+0000609E                            	; dc.l func_loadmain
+0000609E                            	; dc.l func_loadsub
+0000609E                            
+0000609E                            md_ipl:
+0000609E 4950 4C2E 4249 4E00        	dc.b	"IPL.BIN",0
+000060A6                            	
+000060A6                            	align $2
+000060A6                            
+000060A6                            func_loadinter:
+000060A6                            	
+000060A6                            @set_1m:
+000060A6 08F9 0002 FFFF 8003        	bset.b	#MODE,_memory ;set the word ram mode to 1m
+000060AE 67F6                       	beq.b	@set_1m
+000060B0                            @get_access:
+000060B0 08B9 0000 FFFF 8003        	bclr.b	#RET,_memory ;clear the RET bit, getting access to word ram
+000060B8 66F6                       	bne.b	@get_access
+000060BA                            
+000060BA 6100 0000                  	bsr	issoread
+000060BE 6400 0000                  	bcc	@retry			; if success continue with loading
+000060C2                            	
+000060C2 33FC 0002 FFFF 8022        	move.w #RES_ERR,status_2	; else return error
+000060CA 4E75                       	rts
+000060CC                            	
+000060CC                            @retry:
+000060CC 41FA FFD0                  	lea	md_ipl(pc),a0		; Name pointer
+000060D0 6100 0000                  	bsr	filesearch		; File search
+000060D4                            
+000060D4 41FA 0000                  	lea	readsector(pc),a0
+000060D8 2080                       	move.l	d0,(a0)
+000060DA 7C00                       	moveq	#0,d6			; DMA data address
+000060DC 0281 0000 003F             	and.l	#$20000/$800-1,d1	; MAX buffer = $20000
+000060E2 2A01                       	move.l	d1,d5			; read counter
+000060E4 2145 0004                  	move.l	d5,4(a0)
+000060E8 163C 0007                  	move.b	#WORDDMA,d3		; destination
+000060EC 6100 0000                  	bsr	dataread		; CD Data read
+000060F0 6500 FFDA                  	bcs	@retry
+000060F4                            @l2:
+000060F4 08F9 0000 FFFF 8003        	bset.b	#RET,_memory		; swap in the data we loaded so
+000060FC 67F6                       	beq.b	@l2			; the main cpu can read it
+000060FE                            
+000060FE 33FC 0001 FFFF 8022        	move.w	#RES_OK,status_2	; subcpu ready
+00006106                            @end:
+00006106 4E75                       	rts
+00006108                            
+00006108                            ;---------------------------------------------------------------;
+00006108                            ;	user defined routine
+00006108                            ;---------------------------------------------------------------;
+00006108                            
+00006108                            sub_user:
+00006108 4E75                       	rts
+0000610A                            
+0000610A                            
+0000610A                            ;---------------------------------------------------------------;
+0000610A                            ;	communication initialize
+0000610A                            ;---------------------------------------------------------------;
+0000610A                            
+0000610A                            comm_init:
+0000610A 4239 FFFF 800F             	clr.b	sub_flug
+00006110 42B9 FFFF 8020             	clr.l	status_0
+00006116 42B9 FFFF 8024             	clr.l	status_4
+0000611C 42B9 FFFF 8028             	clr.l	status_8
+00006122 42B9 FFFF 802C             	clr.l	status_12
+00006128 4E75                       	rts
+0000612A                            
+0000612A                            ;---------------------------------------------------------------;
+0000612A                            
+0000612A                            
+0000612A                            ;---------------------------------------------------------------;
+0000612A                            ;	iso routines
+0000612A                            ;---------------------------------------------------------------;
+0000612A                            
+0000612A                            	include		sp\isoutil.s
+0000612A                            ;****************************************************************
+0000612A                            ;	MARS MEGA-CD Boot Check Program
+0000612A                            ;					ISSO9660 utility
+0000612A                            ;
+0000612A                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+0000612A                            ;				SEGA ENTERPRISES,LTD.
+0000612A                            ;				CS Hardware R&D Dept.
+0000612A                            ;						T.Okawa
+0000612A                            ;---------------------------------------------------------------;
+0000612A                            ;
+0000612A                            ;****************************************************************
+0000612A                            
+0000612A                            ; include
+0000612A                            	include		include\isso.i
+0000612A                            ;***************************************************************;
+0000612A                            ;	MARS MEGA-CD Boot Check Program
+0000612A                            ;					ISSO9660 asign
+0000612A                            ;
+0000612A                            ;	Copyright SEGA ENTERPRISES,LTD. 1994
+0000612A                            ;				SEGA ENTERPRISES,LTD.
+0000612A                            ;				CS Hardware R&D Dept.
+0000612A                            ;						T.Okawa
+0000612A                            ;---------------------------------------------------------------;
+0000612A                            ;
+0000612A                            ;***************************************************************;
+0000612A                            
+0000612A                            
+0000612A                            ;---------- ISSO9660 Primary Volume Descriptor -----------------;
+0000612A                            
+0000612A =00000000                  vdtype		equ	0
+0000612A =00000001                  stdident	equ	1
+0000612A =00000028                  volumename	equ	40
+0000612A =0000009C                  rootdirentry	equ	156
+0000612A                            
+0000612A                            
+0000612A                            ;---------- ISSO9660 Format of a Directory Record --------------;
+0000612A                            
+0000612A =00000006                  extentLSN	equ	6
+0000612A =0000000E                  filelen		equ	14
+0000612A                            
+0000612A                            
+0000612A                            ;***************************************************************;
+0000612A                            ;	end of file
+0000612A                            ;***************************************************************;
+0000612A                            ;***************************************************************;
+0000612A                            
+0000612A                            ;---------------------------------------------------------------;
+0000612A                            ;	reading for isso9660 volume data
+0000612A                            ;---------------------------------------------------------------;
+0000612A                            
+0000612A                            		align $2
+0000612A                            
+0000612A                            issoread:
+0000612A 45FA 0000                  		lea.l	issosector(pc),a2	; volume descriptor read
+0000612E 3C3C E000                  		move.w	#(volumebuffer>>3)&$0ffff,d6
+00006132 257C 0000 0001 0004        		move.l	#1,4(a2)
+0000613A 2A3C 0000 0000             		move.l	#1-1,d5
+00006140 163C 0005                  		move.b	#PRGDMA,d3
+00006144 6100 0000                  		bsr	dataread
+00006148 6500 0000                  		bcs	discerror
+0000614C                            
+0000614C 41F9 0007 0000             		lea.l	volumebuffer,a0
+00006152 43E8 009C                  		lea.l	rootdirentry(a0),a1
+00006156 2029 0006                  		move.l	extentLSN(a1),d0
+0000615A                            
+0000615A 45FA 0000                  		lea.l	readsector(pc),a2
+0000615E 2480                       		move.l	d0,(a2)
+00006160 3C3C E000                  		move.w	#(volumebuffer>>3)&$0ffff,d6
+00006164 2A3C 0000 001F             		move.l	#$10000/$800-1,d5
+0000616A 257C 0000 0020 0004        		move.l	#$10000/$800,4(a2)
+00006172 163C 0005                  		move.b	#PRGDMA,d3
+00006176 6100 0000                  		bsr	dataread
+0000617A 6500 0000                  		bcs	discerror
+0000617E                            
+0000617E 44FC 0000                  		move.w	#%00000,ccr
+00006182 4E75                       		rts
+00006184                            
+00006184                            issosector:
+00006184 0000 0010                  		dc.l	16
+00006188                            readsector:
+00006188 0000 0000                  		dc.l	0
+0000618C                            readsectorsize:
+0000618C 0000 0000                  		dc.l	0
+00006190                            
+00006190                            
+00006190                            ;---------------------------------------------------------------;
+00006190                            ;		cd-rom data read routine	( only dma )
+00006190                            ;
+00006190                            ; IN  :	a2.l	read sector data address
+00006190                            ;	d6.w	dma address data
+00006190                            ;	d5.w	read counter
+00006190                            ;	d3.b	destination
+00006190                            ;---------------------------------------------------------------;
+00006190                            
+00006190                            dataread:
+00006190 48E7 C9C0                  		movem.l d0/d1/d4/d7/a0/a1,-(a7)
+00006194                            
+00006194                            @retry:
+00006194 0679 0001 0006 0002        		add.w	#1,retry_counter
+0000619C                            
+0000619C 204A                       		movea.l	a2,a0			; read sector set
+0000619E 303C 0020 4EB9 0000 5F22   		bios	ROMREADN
+000061A8                            
+000061A8 3806                       		move.w	d6,d4
+000061AA                            @l1:
+000061AA 4279 0006 0000             		clr.w	v_counter
+000061B0                            @statwait:
+000061B0 0C79 012C 0006 0000        		cmp.w	#60*5,v_counter		; max wait = 5sec
+000061B8 64DA                       		bcc.b	@retry
+000061BA 303C 008A 4EB9 0000 5F22   		bios	CDCSTAT			; data ready ?
+000061C4 65EA                       		bcs.b	@statwait
+000061C6                            
+000061C6 13C3 FFFF 8004             		move.b	d3,_cdcmode		; read mode set
+000061CC 33C4 FFFF 800A             		move.w	d4,_dmaadrs
+000061D2 4279 0006 0000             		clr.w	v_counter
+000061D8                            @l2:
+000061D8 4A79 FFFF 800A             		tst.w	_dmaadrs		; debug
+000061DE 6600                       		bne.b	@ll2			;
+000061E0 0C03 0005                  		cmp.b	#PRGDMA,d3		;
+000061E4 6600                       		bne.b	@ll2			;
+000061E6 4EF9 0000 0206             		jmp	$206			;
+000061EC                            @ll2:
+000061EC 0C79 003C 0006 0000        		cmp.w	#60,v_counter		; max wait = 1sec
+000061F4 649E                       		bcc.b	@retry
+000061F6 303C 008B 4EB9 0000 5F22   		bios	CDCREAD			; cdc set
+00006200 6592                       		bcs.b	@retry
+00006202 4279 0006 0000             		clr.w	v_counter
+00006208                            @l3:
+00006208 0C79 003C 0006 0000        		cmp.w	#60,v_counter		; max wait = 1sec
+00006210 6482                       		bcc.b	@retry
+00006212 4A79 FFFF 800A             		tst.w	_dmaadrs		; debug
+00006218 0839 0007 FFFF 8004        		btst.b	#EDT,_cdcmode		; waiting for DMA finished
+00006220 67E6                       		beq.b	@l3
+00006222                            
+00006222 303C 008D 4EB9 0000 5F22   		bios	CDCACK
+0000622C                            
+0000622C 0644 0100                  		add.w	#($800>>3),d4
+00006230 51CD FF78                  		dbra	d5,@l1
+00006234                            
+00006234 4CDF 0393                  		movem.l (a7)+,d0/d1/d4/d7/a0/a1
+00006238 44FC 0000                  		move.w	#%00000,ccr
+0000623C 4E75                       		rts
+0000623E                            
+0000623E                            discerror:
+0000623E 23FC 6469 7363 FFFF 8020   		move.l	#'disc',status_0
+00006248 23FC 2065 7272 FFFF 8024   		move.l	#' err',status_4
+00006252                            @lp:
+00006252 60FE                       		bra.b	@lp
+00006254                            
+00006254                            
+00006254                            ;---------------------------------------------------------------;
+00006254                            ;		cd-rom data read routine	( subcpu read )
+00006254                            ;
+00006254                            ; IN  :	a2.l	read sector data address
+00006254                            ;	a1.l	pointer of destination buffer
+00006254                            ;	d5.w	read counter
+00006254                            ;---------------------------------------------------------------;
+00006254                            
+00006254                            cpuread:
+00006254 48E7 FFFE                  		movem.l	d0-d7/a0-a6,-(a7)
+00006258                            
+00006258 2A49                       		movea.l	a1,a5
+0000625A                            
+0000625A 4247                       		clr.w	d7
+0000625C                            @retry:
+0000625C 0C47 0003                  		cmp.w	#3,d7
+00006260 6400 FFDC                  		bcc	discerror
+00006264                            
+00006264 204A                       		movea.l	a2,a0			; read sector set
+00006266 303C 0020 4EB9 0000 5F22   		bios	ROMREADN
+00006270                            @l1:
+00006270 4279 0006 0000             		clr.w	v_counter
+00006276                            @statwait:
+00006276 0C79 012C 0006 0000        		cmp.w	#60*5,v_counter		; max wait = 5sec
+0000627E 64DC                       		bcc.b	@retry
+00006280 303C 008A 4EB9 0000 5F22   		bios	CDCSTAT			; data ready ?
+0000628A 65EA                       		bcs.b	@statwait
+0000628C                            
+0000628C 13C3 FFFF 8004             		move.b	d3,_cdcmode		; read mode set
+00006292 4279 0006 0000             		clr.w	v_counter
+00006298                            @l2:
+00006298 0C79 003C 0006 0000        		cmp.w	#60,v_counter		; max wait = 1sec
+000062A0 64BA                       		bcc.b	@retry
+000062A2 303C 008B 4EB9 0000 5F22   		bios	CDCREAD			; cdc set
+000062AC 65AE                       		bcs.b	@retry
+000062AE                            
+000062AE 204D                       		movea.l	a5,a0
+000062B0 43FA 0000                  		lea.l	hederbuffer(pc),a1
+000062B4 303C 008C 4EB9 0000 5F22   		bios	CDCTRN
+000062BE 6500 FF9C                  		bcs	@retry
+000062C2                            
+000062C2 2A48                       		movea.l	a0,a5
+000062C4                            
+000062C4 303C 008D 4EB9 0000 5F22   		bios	CDCACK
+000062CE                            
+000062CE 51CD FFA0                  		dbra	d5,@l1
+000062D2                            
+000062D2 4CDF 7FFF                  		movem.l	(a7)+,d0-d7/a0-a6
+000062D6 4E75                       		rts
+000062D8                            
+000062D8                            hederbuffer:
+000062D8 0000 0000 0000 0000 0000+  		dc.l	0,0,0,0
+000062E8                            
+000062E8                            
+000062E8                            ;---------------------------------------------------------------;
+000062E8                            ;		file search
+000062E8                            ;
+000062E8                            ; IN  :	a0.l	search file data address
+000062E8                            ;
+000062E8                            ; OUT :	d0.l	logical sector number
+000062E8                            ;	d1.l	file size
+000062E8                            ;---------------------------------------------------------------;
+000062E8                            
+000062E8                            filesearch:
+000062E8 48E7 0062                  		movem.l a1/a2/a6,-(a7)
+000062EC                            
+000062EC 43F9 0007 0000             		lea.l	volumebuffer,a1
+000062F2                            @l0:
+000062F2 2C48                       		movea.l	a0,a6
+000062F4 101E                       		move.b	(a6)+,d0
+000062F6                            @l2:
+000062F6 2449                       		movea.l	a1,a2
+000062F8 B019                       		cmp.b	(a1)+,d0
+000062FA 66FA                       		bne.b	@l2
+000062FC                            @l3:
+000062FC 101E                       		move.b	(a6)+,d0
+000062FE 6700 0000                  		beq	@end
+00006302 B019                       		cmp.b	(a1)+,d0
+00006304 66EC                       		bne.b	@l0
+00006306 60F4                       		bra.b	@l3
+00006308                            @end:
+00006308 95FC 0000 0021             		sub.l	#33,a2
+0000630E 102A 0006                  		move.b	extentLSN(a2),d0
+00006312 E188                       		lsl.l	#8,d0
+00006314 102A 0007                  		move.b	extentLSN+1(a2),d0
+00006318 E188                       		lsl.l	#8,d0
+0000631A 102A 0008                  		move.b	extentLSN+2(a2),d0
+0000631E E188                       		lsl.l	#8,d0
+00006320 102A 0009                  		move.b	extentLSN+3(a2),d0
+00006324                            
+00006324 122A 000E                  		move.b	filelen(a2),d1
+00006328 E189                       		lsl.l	#8,d1
+0000632A 122A 000F                  		move.b	filelen+1(a2),d1
+0000632E E189                       		lsl.l	#8,d1
+00006330 122A 0010                  		move.b	filelen+2(a2),d1
+00006334 E189                       		lsl.l	#8,d1
+00006336 122A 0011                  		move.b	filelen+3(a2),d1
+0000633A                            
+0000633A 4CDF 4600                  		movem.l (a7)+,a1/a2/a6
+0000633E 4E75                       		rts
+00006340                            
+00006340                            
+00006340                            ;---------------------------------------------------------------;
+00006340                            ;		file execute
+00006340                            ;---------------------------------------------------------------;
+00006340                            
+00006340                            fileexecute:
+00006340 4279 FFFF 8020             		clr.w	status_0
+00006346 41F9 FFFF 8014             		lea.l	command_4,a0
+0000634C 6100 FF9A                  		bsr	filesearch		; searching for exec file
+00006350                            @l0:
+00006350 08B9 0000 FFFF 8003        		bclr.b	#RET,_memory
+00006358 66F6                       		bne.b	@l0
+0000635A                            
+0000635A 4DFA FE2C                  		lea.l	readsector(pc),a6
+0000635E 2C80                       		move.l	d0,(a6)
+00006360 4286                       		clr.l	d6
+00006362 E089                       		lsr.l	#8,d1
+00006364 E689                       		lsr.l	#3,d1
+00006366 0281 0000 003F             		and.l	#$20000/$800-1,d1	; MAX buffer = $20000
+0000636C 2A01                       		move.l	d1,d5
+0000636E 2D45 0004                  		move.l	d5,4(a6)
+00006372 06AE 0000 0001 0004        		add.l	#1,4(a6)
+0000637A 163C 0007                  		move.b	#WORDDMA,d3
+0000637E 6100 FE10                  		bsr	dataread
+00006382 6500 FEBA                  		bcs	discerror
+00006386                            
+00006386 41F9 000C 0000             		lea.l	word_ram_1m,a0
+0000638C 2018                       		move.l	(a0)+,d0		; sub program load
+0000638E 2E18                       		move.l	(a0)+,d7
+00006390 6700                       		beq.b	@l1
+00006392 D1C0                       		add.l	d0,a0
+00006394 E88F                       		lsr.l	#4,d7
+00006396 0487 0000 0001             		sub.l	#1,d7
+0000639C 43F9 0001 0000             		lea.l	ap_program_area,a1
+000063A2                            @copy:
+000063A2 22D8                       		move.l	(a0)+,(a1)+
+000063A4 22D8                       		move.l	(a0)+,(a1)+
+000063A6 22D8                       		move.l	(a0)+,(a1)+
+000063A8 22D8                       		move.l	(a0)+,(a1)+
+000063AA 51CF FFF6                  		dbra	d7,@copy
+000063AE                            @l1:
+000063AE 08F9 0000 FFFF 8003        		bset.b	#RET,_memory
+000063B6 67F6                       		beq.b	@l1
+000063B8                            
+000063B8 33FC 676F FFFF 8020        		move.w	#'go',status_0		; finished loading
+000063C0                            @l2:
+000063C0 0CB9 6578 6563 FFFF 8010   		cmp.l	#'exec',command_0
+000063CA 67F4                       		beq.b	@l2
+000063CC 42B9 FFFF 8020             		clr.l	status_0
+000063D2                            
+000063D2 0C47 FFFF                  		cmp.w	#-1,d7
+000063D6 6600                       		bne.b	@end
+000063D8 4EB9 0001 0000             		jsr	ap_program_area
+000063DE                            @end:
+000063DE 4E75                       		rts
+000063E0                            
+000063E0                            
+000063E0                            ;****************************************************************
+000063E0                            ;	end of file
+000063E0                            ;****************************************************************
+000063E0                            ;****************************************************************
+000063E0                            
+000063E0                            
+000063E0                            ;****************************************************************
+000063E0                            ;	end of file
+000063E0                            ;****************************************************************

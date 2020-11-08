@@ -18,7 +18,7 @@ ECHO Building IP
 %ASM_DIR%\asm68k.exe %ASM_FLAGS% ip\ip_prg.s, ip_prg.bin
 
 ECHO Building SP
-%ASM_DIR%\asm68k.exe %ASM_FLAGS% sp\sp_prg.s, sp_prg.bin
+%ASM_DIR%\asm68k.exe %ASM_FLAGS% sp\sp_prg.s, sp_prg.bin, sp\sp_prg.sym, sp\sp_prg.lst
 
 ECHO Building CD
 %ASM_DIR%\asm68k.exe %ASM_FLAGS% main.s, main.iso

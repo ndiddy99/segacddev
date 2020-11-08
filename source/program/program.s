@@ -33,20 +33,46 @@ entry:
 	move.w #$f0f,d0 ;magenta
 	move.w d0,$c00000
 	
-	moveq #0,d0
-	moveq #0,d1
-	lea hello_text,a0
+	;---start print disclaimer text---
+	moveq #1,d0
+	moveq #1,d1
+	lea line1_text,a0
 	jsr printstr
 	
-	moveq #5,d0
+	moveq #1,d0
 	moveq #2,d1
-	lea penis_text,a0
+	lea line2_text,a0
 	jsr printstr
 	
-	moveq #0,d0
+	moveq #1,d0
+	moveq #3,d1
+	lea line3_text,a0
+	jsr printstr
+
+	moveq #1,d0
 	moveq #4,d1
-	move.w #$ABCD,d2
-	jsr printword
+	lea line4_text,a0
+	jsr printstr
+
+	moveq #1,d0
+	moveq #5,d1
+	lea line5_text,a0
+	jsr printstr
+
+	moveq #1,d0
+	moveq #6,d1
+	lea line6_text,a0
+	jsr printstr
+
+	moveq #1,d0
+	moveq #7,d1
+	lea line7_text,a0
+	jsr printstr
+
+	moveq #1,d0
+	moveq #8,d1
+	lea line8_text,a0
+	jsr printstr	
 	
 	; move.w #$c000,d0
 	; jsr vramaddr
@@ -54,23 +80,31 @@ entry:
 	; move.w d0,$c00000
 	
 main_loop:
-	lea.l systembase,a6
+	bra main_loop
+	
+line1_text:
+	dc.b "Sega CD Freeloader v1.0",0
 
-	moveq #0,d0
-	moveq #4,d1
-	move.w v_counter(a6),d2
-	jsr printword
-	move.w #1,vblank_flag(a6)
-spin_loop:
-	move.w vblank_flag(a6),d0
-	bne spin_loop
-	jmp main_loop
+line2_text:
+	dc.b "www.infochunk.com/scd/index.html",0
 	
-hello_text:
-	dc.b "Hello world!",0
+line3_text:
+	dc.b "This software is non-commercial.",0
+
+line4_text:
+	dc.b "If you bought it or recieved it as",0
 	
-penis_text:
-	dc.b "penis",0
+line5_text:
+	dc.b "part of a bundle (e.g. with an import",0
+	
+line6_text:
+	dc.b "game or console), you should do a",0
+	
+line7_text:
+	dc.b "chargeback and leave the seller bad",0
+	
+line8_text:
+	dc.b "feedback.",0
 
 	align $2
 

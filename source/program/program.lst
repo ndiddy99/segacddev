@@ -688,189 +688,223 @@
 00FF0036 303C 0F0F                  	move.w #$f0f,d0 ;magenta
 00FF003A 33C0 00C0 0000             	move.w d0,$c00000
 00FF0040                            	
-00FF0040 7000                       	moveq #0,d0
-00FF0042 7200                       	moveq #0,d1
-00FF0044 41F9 0000 0000             	lea hello_text,a0
+00FF0040                            	;---start print disclaimer text---
+00FF0040 7001                       	moveq #1,d0
+00FF0042 7201                       	moveq #1,d1
+00FF0044 41F9 0000 0000             	lea line1_text,a0
 00FF004A 4EB9 0000 0000             	jsr printstr
 00FF0050                            	
-00FF0050 7005                       	moveq #5,d0
+00FF0050 7001                       	moveq #1,d0
 00FF0052 7202                       	moveq #2,d1
-00FF0054 41F9 0000 0000             	lea penis_text,a0
+00FF0054 41F9 0000 0000             	lea line2_text,a0
 00FF005A 4EB9 0000 0000             	jsr printstr
 00FF0060                            	
-00FF0060 7000                       	moveq #0,d0
-00FF0062 7204                       	moveq #4,d1
-00FF0064 343C ABCD                  	move.w #$ABCD,d2
-00FF0068 4EB9 0000 0000             	jsr printword
-00FF006E                            	
-00FF006E                            	; move.w #$c000,d0
-00FF006E                            	; jsr vramaddr
-00FF006E                            	; move.w #$21,d0
-00FF006E                            	; move.w d0,$c00000
-00FF006E                            	
-00FF006E                            main_loop:
-00FF006E 4DF9 FFFF E000             	lea.l systembase,a6
-00FF0074                            
-00FF0074 7000                       	moveq #0,d0
-00FF0076 7204                       	moveq #4,d1
-00FF0078 342E 0030                  	move.w v_counter(a6),d2
-00FF007C 4EB9 0000 0000             	jsr printword
-00FF0082 3D7C 0001 0040             	move.w #1,vblank_flag(a6)
-00FF0088                            spin_loop:
-00FF0088 302E 0040                  	move.w vblank_flag(a6),d0
-00FF008C 6600 FFFA                  	bne spin_loop
-00FF0090 4EF9 00FF 006E             	jmp main_loop
-00FF0096                            	
-00FF0096                            hello_text:
-00FF0096 4865 6C6C 6F20 776F 726C+  	dc.b "Hello world!",0
-00FF00A3                            	
-00FF00A3                            penis_text:
-00FF00A3 7065 6E69 7300             	dc.b "penis",0
-00FF00A9                            
-00FF00A9 00                         	align $2
-00FF00AA                            
-00FF00AA                            ;---------------------------------------------------------------;
-00FF00AA                            ;	Prints a string using the font loaded by the BIOS
-00FF00AA                            ;
-00FF00AA                            ; IN	a0	Pointer to the string
-00FF00AA                            ;	d0.w	String x position
-00FF00AA                            ;	d1.w	String y position
-00FF00AA                            ;---------------------------------------------------------------;
-00FF00AA                            printstr:
-00FF00AA                            	;1. calculate vram address. BIOS initializes the VDP to 64x64 (so
-00FF00AA                            	;128 bytes per line) with a base address of $c000 for plane 1.
-00FF00AA 33FC 8F02 00C0 0004        	move.w #$8f02,$c00004 ;set vdp increment to 2 bytes (should already be set but just to make sure)
-00FF00B2 E340                       	asl.w #1,d0 ;multiply x pos by 2 (words->bytes)
-00FF00B4 EF41                       	asl.w #7,d1 ;multiply y pos by 128
-00FF00B6 D041                       	add.w d1,d0 ;add y pos to x pos
-00FF00B8 0640 C000                  	add.w #$c000,d0 ;add base address to calculated area
-00FF00BC 4EB9 0000 0000             	jsr vramaddr ;set vdp to write to the calculated address
-00FF00C2 7000                       	moveq #0,d0 ;clear d0
-00FF00C4                            @printloop:
-00FF00C4 1018                       	move.b (a0)+,d0 ;move text to d0
-00FF00C6 6700 0000                  	beq @doneprint ;if we hit the null terminator, exit
-00FF00CA 33C0 00C0 0000             	move.w d0,$c00000 ;write to vram
-00FF00D0 6000 FFF2                  	bra @printloop
-00FF00D4                            @doneprint
-00FF00D4 4E75                       	rts
-00FF00D6                            	
-00FF00D6                            ;---------------------------------------------------------------;
-00FF00D6                            ;	Prints a word using the font loaded by the BIOS
-00FF00D6                            ;
-00FF00D6                            ; IN	d0.w	x position
-00FF00D6                            ;	d1.w	y position
-00FF00D6                            ;	d2.w	word to print
-00FF00D6                            ;---------------------------------------------------------------;
-00FF00D6                            printword:
-00FF00D6                            	;calculate vram address. BIOS initializes the VDP to 64x64 (so
-00FF00D6                            	;128 bytes per line) with a base address of $c000 for plane 1.
-00FF00D6 33FC 8F02 00C0 0004        	move.w #$8f02,$c00004 ;set vdp increment to 2 bytes (should already be set but just to make sure)
-00FF00DE E340                       	asl.w #1,d0 ;multiply x pos by 2 (words->bytes)
-00FF00E0 EF41                       	asl.w #7,d1 ;multiply y pos by 128
-00FF00E2 D041                       	add.w d1,d0 ;add y pos to x pos
-00FF00E4 0640 C000                  	add.w #$c000,d0 ;add base address to calculated area
-00FF00E8 4EB9 0000 0000             	jsr vramaddr ;set vdp to write to the calculated address
-00FF00EE                            	;print high nybble of high byte
-00FF00EE 3002                       	move.w d2,d0
-00FF00F0 E958                       	rol.w #4,d0 ;isolate high nybble of the word
-00FF00F2 0240 000F                  	and.w #$f,d0
-00FF00F6 4EB9 0000 0000             	jsr printnybble
-00FF00FC                            	;print low nybble of high byte
-00FF00FC 3002                       	move.w d2,d0
-00FF00FE E048                       	lsr.w #8,d0
-00FF0100 0240 000F                  	and.w #$f,d0
-00FF0104 4EB9 0000 0000             	jsr printnybble
-00FF010A                            	;print high nybble of low byte
-00FF010A 3002                       	move.w d2,d0
-00FF010C E848                       	lsr.w #4,d0
-00FF010E 0240 000F                  	and.w #$f,d0
-00FF0112 4EB9 0000 0000             	jsr printnybble
-00FF0118                            	;print low nybble of low byte
-00FF0118 3002                       	move.w d2,d0
-00FF011A 0240 000F                  	and.w #$f,d0
-00FF011E 4EB9 0000 0000             	jsr printnybble
-00FF0124                            	
-00FF0124 4E75                       	rts
-00FF0126                            
-00FF0126                            ;---------------------------------------------------------------;
-00FF0126                            ;	Utility function that writes a nybble to VRAM
-00FF0126                            ;
-00FF0126                            ; IN	d0.w	nybble to print
-00FF0126                            ;---------------------------------------------------------------;
-00FF0126                            
-00FF0126                            printnybble:
-00FF0126 0C40 000A                  	cmp.w #$a,d0
-00FF012A 6500 0000                  	bcs @nine_or_less
-00FF012E 0640 0037                  	add.w #'A'-$a,d0
-00FF0132 6000 0000                  	bra @done
-00FF0136                            @nine_or_less:
-00FF0136 0640 0030                  	add.w #'0',d0
-00FF013A                            @done:
-00FF013A 33C0 00C0 0000             	move.w d0,$c00000
-00FF0140 4E75                       	rts
-00FF0142                            	
-00FF0142                            
-00FF0142                            ;---------------------------------------------------------------;
-00FF0142                            ;	Sets CRAM to write to given address
-00FF0142                            ;
-00FF0142                            ; IN	d0.w	Address to write to in CRAM
-00FF0142                            ;---------------------------------------------------------------;
-00FF0142                            
-00FF0142                            cramaddr:
-00FF0142 48A7 8000                  	movem.w d0,-(a7) ;save address
-00FF0146 0240 3FFF                  	and.w #$3fff,d0 ;mask off last two bits
-00FF014A 0040 C000                  	or.w #$c000,d0 ;add cram write command
-00FF014E 33C0 00C0 0004             	move.w d0,$c00004 ;write first word to vdp
-00FF0154                            	
-00FF0154 4C9F 0001                  	movem.w (a7)+,d0 ;retrieve address
-00FF0158 E558                       	rol.w #2,d0 ;last 2 bits -> first 2 bits
-00FF015A 0240 0003                  	and.w #3,d0 ;mask off everything but first 2 bits
-00FF015E 33C0 00C0 0004             	move.w d0,$c00004 ;write second word to vdp
-00FF0164 4E75                       	rts
-00FF0166                            	
-00FF0166                            ;---------------------------------------------------------------;
-00FF0166                            ;	Sets VRAM to write to given address
-00FF0166                            ;
-00FF0166                            ; IN	d0.w	Address to write to in CRAM
-00FF0166                            ;---------------------------------------------------------------;
-00FF0166                            
-00FF0166                            vramaddr:
-00FF0166 48A7 8000                  	movem.w d0,-(a7) ;save address
-00FF016A 0240 3FFF                  	and.w #$3fff,d0 ;mask off last two bits
-00FF016E 0040 4000                  	or.w #$4000,d0 ;add vram write command
-00FF0172 33C0 00C0 0004             	move.w d0,$c00004 ;write first word to vdp
-00FF0178                            	
-00FF0178 4C9F 0001                  	movem.w (a7)+,d0 ;retrieve address
-00FF017C E558                       	rol.w #2,d0 ;last 2 bits -> first 2 bits
-00FF017E 0240 0003                  	and.w #3,d0 ;mask off everything but first 2 bits
-00FF0182 33C0 00C0 0004             	move.w d0,$c00004 ;write second word to vdp
-00FF0188 4E75                       	rts
-00FF018A                            
-00FF018A                            ;---------------------------------------------------------------*
-00FF018A                            ;	V interrupt
-00FF018A                            ;---------------------------------------------------------------*
-00FF018A                            
-00FF018A                            _vint:
-00FF018A 48E7 FFFE                  		movem.l	d0-d7/a0-a6,-(a7)
-00FF018E                            		
-00FF018E 4DF9 FFFF E000             		lea.l	systembase,a6
-00FF0194                            
-00FF0194                            		; bset.b	#IFL2,_iflreg		; SUBCPU Interrupt
-00FF0194                            
-00FF0194                            		; btst.b	#SCROLL_ON,vdp_flug(a6)
-00FF0194                            		; beq.b	@v2
-00FF0194                            		; bsr	scrolldma		; スクロールテーブルのＤＭＡ
-00FF0194                            	; @v2:
-00FF0194                            		; btst.b	#COLOR_ON,vdp_flug(a6)
-00FF0194                            		; beq.b	@cend
-00FF0194                            		; lea.l	colorbuffer,a0		; color data address
-00FF0194                            		; move.w	reg_1(a6),d2		; VDP reg #1
-00FF0194                            		; bsr	cramdma			; CRAM DMA
-00FF0194                            	; @cend:
-00FF0194 066E 0001 0030             		add.w #1,v_counter(a6)
-00FF019A 3D7C 0000 0040             		move.w #0,vblank_flag(a6) 
-00FF01A0                            	; @end:
-00FF01A0 4CDF 7FFF                  		movem.l	(a7)+,d0-d7/a0-a6
-00FF01A4 4E73                       		rte
-00FF01A6 4E73                       		rte
-00FF01A8                            
+00FF0060 7001                       	moveq #1,d0
+00FF0062 7203                       	moveq #3,d1
+00FF0064 41F9 0000 0000             	lea line3_text,a0
+00FF006A 4EB9 0000 0000             	jsr printstr
+00FF0070                            
+00FF0070 7001                       	moveq #1,d0
+00FF0072 7204                       	moveq #4,d1
+00FF0074 41F9 0000 0000             	lea line4_text,a0
+00FF007A 4EB9 0000 0000             	jsr printstr
+00FF0080                            
+00FF0080 7001                       	moveq #1,d0
+00FF0082 7205                       	moveq #5,d1
+00FF0084 41F9 0000 0000             	lea line5_text,a0
+00FF008A 4EB9 0000 0000             	jsr printstr
+00FF0090                            
+00FF0090 7001                       	moveq #1,d0
+00FF0092 7206                       	moveq #6,d1
+00FF0094 41F9 0000 0000             	lea line6_text,a0
+00FF009A 4EB9 0000 0000             	jsr printstr
+00FF00A0                            
+00FF00A0 7001                       	moveq #1,d0
+00FF00A2 7207                       	moveq #7,d1
+00FF00A4 41F9 0000 0000             	lea line7_text,a0
+00FF00AA 4EB9 0000 0000             	jsr printstr
+00FF00B0                            
+00FF00B0 7001                       	moveq #1,d0
+00FF00B2 7208                       	moveq #8,d1
+00FF00B4 41F9 0000 0000             	lea line8_text,a0
+00FF00BA 4EB9 0000 0000             	jsr printstr	
+00FF00C0                            	
+00FF00C0                            	; move.w #$c000,d0
+00FF00C0                            	; jsr vramaddr
+00FF00C0                            	; move.w #$21,d0
+00FF00C0                            	; move.w d0,$c00000
+00FF00C0                            	
+00FF00C0                            main_loop:
+00FF00C0 6000 FFFE                  	bra main_loop
+00FF00C4                            	
+00FF00C4                            line1_text:
+00FF00C4 5365 6761 2043 4420 4672+  	dc.b "Sega CD Freeloader v1.0",0
+00FF00DC                            
+00FF00DC                            line2_text:
+00FF00DC 7777 772E 696E 666F 6368+  	dc.b "www.infochunk.com/scd/index.html",0
+00FF00FD                            	
+00FF00FD                            line3_text:
+00FF00FD 5468 6973 2073 6F66 7477+  	dc.b "This software is non-commercial.",0
+00FF011E                            
+00FF011E                            line4_text:
+00FF011E 4966 2079 6F75 2062 6F75+  	dc.b "If you bought it or recieved it as",0
+00FF0141                            	
+00FF0141                            line5_text:
+00FF0141 7061 7274 206F 6620 6120+  	dc.b "part of a bundle (e.g. with an import",0
+00FF0167                            	
+00FF0167                            line6_text:
+00FF0167 6761 6D65 206F 7220 636F+  	dc.b "game or console), you should do a",0
+00FF0189                            	
+00FF0189                            line7_text:
+00FF0189 6368 6172 6765 6261 636B+  	dc.b "chargeback and leave the seller bad",0
+00FF01AD                            	
+00FF01AD                            line8_text:
+00FF01AD 6665 6564 6261 636B 2E00   	dc.b "feedback.",0
+00FF01B7                            
+00FF01B7 00                         	align $2
+00FF01B8                            
+00FF01B8                            ;---------------------------------------------------------------;
+00FF01B8                            ;	Prints a string using the font loaded by the BIOS
+00FF01B8                            ;
+00FF01B8                            ; IN	a0	Pointer to the string
+00FF01B8                            ;	d0.w	String x position
+00FF01B8                            ;	d1.w	String y position
+00FF01B8                            ;---------------------------------------------------------------;
+00FF01B8                            printstr:
+00FF01B8                            	;1. calculate vram address. BIOS initializes the VDP to 64x64 (so
+00FF01B8                            	;128 bytes per line) with a base address of $c000 for plane 1.
+00FF01B8 33FC 8F02 00C0 0004        	move.w #$8f02,$c00004 ;set vdp increment to 2 bytes (should already be set but just to make sure)
+00FF01C0 E340                       	asl.w #1,d0 ;multiply x pos by 2 (words->bytes)
+00FF01C2 EF41                       	asl.w #7,d1 ;multiply y pos by 128
+00FF01C4 D041                       	add.w d1,d0 ;add y pos to x pos
+00FF01C6 0640 C000                  	add.w #$c000,d0 ;add base address to calculated area
+00FF01CA 4EB9 0000 0000             	jsr vramaddr ;set vdp to write to the calculated address
+00FF01D0 7000                       	moveq #0,d0 ;clear d0
+00FF01D2                            @printloop:
+00FF01D2 1018                       	move.b (a0)+,d0 ;move text to d0
+00FF01D4 6700 0000                  	beq @doneprint ;if we hit the null terminator, exit
+00FF01D8 33C0 00C0 0000             	move.w d0,$c00000 ;write to vram
+00FF01DE 6000 FFF2                  	bra @printloop
+00FF01E2                            @doneprint
+00FF01E2 4E75                       	rts
+00FF01E4                            	
+00FF01E4                            ;---------------------------------------------------------------;
+00FF01E4                            ;	Prints a word using the font loaded by the BIOS
+00FF01E4                            ;
+00FF01E4                            ; IN	d0.w	x position
+00FF01E4                            ;	d1.w	y position
+00FF01E4                            ;	d2.w	word to print
+00FF01E4                            ;---------------------------------------------------------------;
+00FF01E4                            printword:
+00FF01E4                            	;calculate vram address. BIOS initializes the VDP to 64x64 (so
+00FF01E4                            	;128 bytes per line) with a base address of $c000 for plane 1.
+00FF01E4 33FC 8F02 00C0 0004        	move.w #$8f02,$c00004 ;set vdp increment to 2 bytes (should already be set but just to make sure)
+00FF01EC E340                       	asl.w #1,d0 ;multiply x pos by 2 (words->bytes)
+00FF01EE EF41                       	asl.w #7,d1 ;multiply y pos by 128
+00FF01F0 D041                       	add.w d1,d0 ;add y pos to x pos
+00FF01F2 0640 C000                  	add.w #$c000,d0 ;add base address to calculated area
+00FF01F6 4EB9 0000 0000             	jsr vramaddr ;set vdp to write to the calculated address
+00FF01FC                            	;print high nybble of high byte
+00FF01FC 3002                       	move.w d2,d0
+00FF01FE E958                       	rol.w #4,d0 ;isolate high nybble of the word
+00FF0200 0240 000F                  	and.w #$f,d0
+00FF0204 4EB9 0000 0000             	jsr printnybble
+00FF020A                            	;print low nybble of high byte
+00FF020A 3002                       	move.w d2,d0
+00FF020C E048                       	lsr.w #8,d0
+00FF020E 0240 000F                  	and.w #$f,d0
+00FF0212 4EB9 0000 0000             	jsr printnybble
+00FF0218                            	;print high nybble of low byte
+00FF0218 3002                       	move.w d2,d0
+00FF021A E848                       	lsr.w #4,d0
+00FF021C 0240 000F                  	and.w #$f,d0
+00FF0220 4EB9 0000 0000             	jsr printnybble
+00FF0226                            	;print low nybble of low byte
+00FF0226 3002                       	move.w d2,d0
+00FF0228 0240 000F                  	and.w #$f,d0
+00FF022C 4EB9 0000 0000             	jsr printnybble
+00FF0232                            	
+00FF0232 4E75                       	rts
+00FF0234                            
+00FF0234                            ;---------------------------------------------------------------;
+00FF0234                            ;	Utility function that writes a nybble to VRAM
+00FF0234                            ;
+00FF0234                            ; IN	d0.w	nybble to print
+00FF0234                            ;---------------------------------------------------------------;
+00FF0234                            
+00FF0234                            printnybble:
+00FF0234 0C40 000A                  	cmp.w #$a,d0
+00FF0238 6500 0000                  	bcs @nine_or_less
+00FF023C 0640 0037                  	add.w #'A'-$a,d0
+00FF0240 6000 0000                  	bra @done
+00FF0244                            @nine_or_less:
+00FF0244 0640 0030                  	add.w #'0',d0
+00FF0248                            @done:
+00FF0248 33C0 00C0 0000             	move.w d0,$c00000
+00FF024E 4E75                       	rts
+00FF0250                            	
+00FF0250                            
+00FF0250                            ;---------------------------------------------------------------;
+00FF0250                            ;	Sets CRAM to write to given address
+00FF0250                            ;
+00FF0250                            ; IN	d0.w	Address to write to in CRAM
+00FF0250                            ;---------------------------------------------------------------;
+00FF0250                            
+00FF0250                            cramaddr:
+00FF0250 48A7 8000                  	movem.w d0,-(a7) ;save address
+00FF0254 0240 3FFF                  	and.w #$3fff,d0 ;mask off last two bits
+00FF0258 0040 C000                  	or.w #$c000,d0 ;add cram write command
+00FF025C 33C0 00C0 0004             	move.w d0,$c00004 ;write first word to vdp
+00FF0262                            	
+00FF0262 4C9F 0001                  	movem.w (a7)+,d0 ;retrieve address
+00FF0266 E558                       	rol.w #2,d0 ;last 2 bits -> first 2 bits
+00FF0268 0240 0003                  	and.w #3,d0 ;mask off everything but first 2 bits
+00FF026C 33C0 00C0 0004             	move.w d0,$c00004 ;write second word to vdp
+00FF0272 4E75                       	rts
+00FF0274                            	
+00FF0274                            ;---------------------------------------------------------------;
+00FF0274                            ;	Sets VRAM to write to given address
+00FF0274                            ;
+00FF0274                            ; IN	d0.w	Address to write to in CRAM
+00FF0274                            ;---------------------------------------------------------------;
+00FF0274                            
+00FF0274                            vramaddr:
+00FF0274 48A7 8000                  	movem.w d0,-(a7) ;save address
+00FF0278 0240 3FFF                  	and.w #$3fff,d0 ;mask off last two bits
+00FF027C 0040 4000                  	or.w #$4000,d0 ;add vram write command
+00FF0280 33C0 00C0 0004             	move.w d0,$c00004 ;write first word to vdp
+00FF0286                            	
+00FF0286 4C9F 0001                  	movem.w (a7)+,d0 ;retrieve address
+00FF028A E558                       	rol.w #2,d0 ;last 2 bits -> first 2 bits
+00FF028C 0240 0003                  	and.w #3,d0 ;mask off everything but first 2 bits
+00FF0290 33C0 00C0 0004             	move.w d0,$c00004 ;write second word to vdp
+00FF0296 4E75                       	rts
+00FF0298                            
+00FF0298                            ;---------------------------------------------------------------*
+00FF0298                            ;	V interrupt
+00FF0298                            ;---------------------------------------------------------------*
+00FF0298                            
+00FF0298                            _vint:
+00FF0298 48E7 FFFE                  		movem.l	d0-d7/a0-a6,-(a7)
+00FF029C                            		
+00FF029C 4DF9 FFFF E000             		lea.l	systembase,a6
+00FF02A2                            
+00FF02A2                            		; bset.b	#IFL2,_iflreg		; SUBCPU Interrupt
+00FF02A2                            
+00FF02A2                            		; btst.b	#SCROLL_ON,vdp_flug(a6)
+00FF02A2                            		; beq.b	@v2
+00FF02A2                            		; bsr	scrolldma		; スクロールテーブルのＤＭＡ
+00FF02A2                            	; @v2:
+00FF02A2                            		; btst.b	#COLOR_ON,vdp_flug(a6)
+00FF02A2                            		; beq.b	@cend
+00FF02A2                            		; lea.l	colorbuffer,a0		; color data address
+00FF02A2                            		; move.w	reg_1(a6),d2		; VDP reg #1
+00FF02A2                            		; bsr	cramdma			; CRAM DMA
+00FF02A2                            	; @cend:
+00FF02A2 066E 0001 0030             		add.w #1,v_counter(a6)
+00FF02A8 3D7C 0000 0040             		move.w #0,vblank_flag(a6) 
+00FF02AE                            	; @end:
+00FF02AE 4CDF 7FFF                  		movem.l	(a7)+,d0-d7/a0-a6
+00FF02B2 4E73                       		rte
+00FF02B4 4E73                       		rte
+00FF02B6                            

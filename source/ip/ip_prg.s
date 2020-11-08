@@ -13,6 +13,7 @@
 
 ; include
 	include	include\md.i		; Mega Drive Mapping
+	include include\cdcmd.i		; Sub CPU commands
 
 	list
 
@@ -22,32 +23,36 @@
 ;---------------------------------------------------------------;
 
 _start:
-		moveq #0,d0
-		bsr cramaddr
-		move.w #$f00,d0 ;blue
-		move.w d0,$c00000
+	moveq #0,d0
+	bsr cramaddr
+	move.w #$f00,d0 ;blue
+	move.w d0,$c00000
 
-@test_load:	
-		cmp.w	#'ok',status_0	; SP loading end ?
-		bne.b	@test_load
-		
-@test_1m:
-		btst.b	#MODE,_memory ;wait until word ram is set to 1M mode
-		beq.b	@test_1m
-		
-@test_access:
-		btst.b	#RET,_memory ;wait until the sub cpu stops messing with ram
-		beq.b	@test_access
+@test_init:	
+	cmp.w	#FLG_ACTIVATE,status_2	; has the sp started yet?
+	bne.b	@test_init
+	
+	move.w #CMD_LOADINTER,command_0 ;tell sub cpu to load the main program
+	move.w #FLG_ACTIVATE,command_2  ;into word ram
+	
+@wait_process:
+	cmp.w #CMD_LOADINTER,status_0 ; has the sub cpu processed the command yet?
+	bne @wait_process
+	clr.w command_2 ;if it has processed the command, clear the init flag
+	
+@wait_finish: ;wait for the command to finish
+	cmp.w #RES_OK,status_2
+	bne @wait_finish
 
-		moveq #0,d0
-		bsr cramaddr
-		move.w #$fff,d0 ;white
-		move.w d0,$c00000
+	moveq #0,d0
+	bsr cramaddr
+	move.w #$fff,d0 ;white
+	move.w d0,$c00000
 
-		lea.l	word_ram,a0
+	lea.l	word_ram,a0
 
-		jmp	(a0)
-		
+	jmp	(a0)
+	
 ;---------------------------------------------------------------;
 ;		Sets CRAM to write to given address
 ;
